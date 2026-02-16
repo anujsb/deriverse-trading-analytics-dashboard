@@ -1,4 +1,4 @@
-'use client';
+// 'use client';
 
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
