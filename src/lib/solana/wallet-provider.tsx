@@ -1,4 +1,4 @@
-// 'use client';
+'use client';
 
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
@@ -8,7 +8,7 @@ import { clusterApiUrl } from '@solana/web3.js';
 import { useMemo } from 'react';
 
 
-require('@solana/wallet-adapter-react-ui/styles.css');
+// require('@solana/wallet-adapter-react-ui/styles.css');
 
 export function SolanaWalletProvider({ children }: { children: React.ReactNode }) {
 
