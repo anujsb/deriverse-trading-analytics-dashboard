@@ -10,7 +10,7 @@ import { useMemo } from 'react';
 
 export function SolanaWalletProvider({ children }: { children: React.ReactNode }) {
 
-  // const network = WalletAdapterNetwork.Mainnet;
+  // const network = WalletAdapterNetwork.Mainnet; ()
   const network = WalletAdapterNetwork.Devnet;
   
 

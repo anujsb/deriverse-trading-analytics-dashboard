@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { useWallet } from '@solana/wallet-adapter-react';
 
-// 👇 Dynamically import WalletMultiButton with SSR disabled
+
 const WalletMultiButton = dynamic(
   async () => {
     const mod = await import('@solana/wallet-adapter-react-ui');
