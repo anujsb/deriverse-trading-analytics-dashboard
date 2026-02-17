@@ -1,7 +1,16 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+
+// 👇 Dynamically import WalletMultiButton with SSR disabled
+const WalletMultiButton = dynamic(
+  async () => {
+    const mod = await import('@solana/wallet-adapter-react-ui');
+    return mod.WalletMultiButton;
+  },
+  { ssr: false }
+);
 
 export function WalletConnectButton() {
   const { publicKey, connected } = useWallet();
@@ -11,7 +20,8 @@ export function WalletConnectButton() {
       <WalletMultiButton />
       {connected && publicKey && (
         <div className="text-sm">
-          Connected: {publicKey.toBase58().slice(0, 4)}...{publicKey.toBase58().slice(-4)}
+          Connected: {publicKey.toBase58().slice(0, 4)}...
+          {publicKey.toBase58().slice(-4)}
         </div>
       )}
     </div>
