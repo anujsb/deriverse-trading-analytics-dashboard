@@ -78,10 +78,6 @@ export function PnLChart({ data, loading }: PnLChartProps) {
           />
 
 
-
-
-
-
           <ReferenceLine yAxisId="pnl" y={0} stroke="#6b7280" strokeDasharray="3 3" />
           <Area
             yAxisId="pnl"
