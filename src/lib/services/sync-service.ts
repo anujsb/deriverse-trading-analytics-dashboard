@@ -45,7 +45,7 @@ export class TradeSyncService {
 
       console.log(`Found ${newTrades.length} new trades`);
 
-      // 5. Insert new trades into database
+      // 5. Insert new trades (skip duplicates by signature)
       if (newTrades.length > 0) {
         await db.insert(trades).values(
           newTrades.map(trade => ({
@@ -61,7 +61,7 @@ export class TradeSyncService {
             fee: trade.fee.toString(),
             pnl: trade.pnl?.toString() || null,
           }))
-        );
+        ).onConflictDoNothing({ target: trades.signature });
       }
 
       // 6. Update last synced timestamp

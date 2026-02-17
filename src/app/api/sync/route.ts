@@ -12,8 +12,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use environment variable for RPC endpoint
-    const rpcEndpoint = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+    // RPC endpoint
+    // const rpcEndpoint = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+    const rpcEndpoint = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.devnet.solana.com';
     
     const syncService = new TradeSyncService(rpcEndpoint);
     const result = await syncService.syncUserTrades(walletAddress);

@@ -1,8 +1,5 @@
 import { Connection, PublicKey } from '@solana/web3.js';
-
-// Replace with actual Deriverse Program ID
-// const DERIVERSE_PROGRAM_ID = new PublicKey('DRVSpZ2YUYYKgZP8XtLhAGtT1zYSCKzeHfb4DgRnrgqD');
-const DERIVERSE_PROGRAM_ID = process.env.DERIVERSE_PROGRAM_ID || '';
+import { isDeriverseTransaction, parseDeriverseTransaction } from './parse-deriverse-tx';
 
 export interface TradeTransaction {
   signature: string;
@@ -17,38 +14,67 @@ export interface TradeTransaction {
   status: 'OPEN' | 'CLOSED';
 }
 
+
+function fallbackTradeFromTx(
+  signature: string,
+  tx: { blockTime?: number | null; meta?: { fee?: number } | null },
+  symbolOverride?: string
+): TradeTransaction {
+  const timestamp = tx.blockTime != null ? tx.blockTime * 1000 : Date.now();
+  const feeLamports = tx.meta?.fee ?? 0;
+  const feeInSol = feeLamports / 1_000_000_000;
+
+  return {
+    signature,
+    timestamp,
+    type: 'LONG',
+    symbol: symbolOverride ?? 'Unknown',
+    entryPrice: 0,
+    size: 0,
+    fee: feeInSol,
+    status: 'CLOSED',
+  };
+}
+
 export async function fetchUserTrades(
   walletAddress: string,
   connection: Connection
 ): Promise<TradeTransaction[]> {
   try {
     const publicKey = new PublicKey(walletAddress);
-    
-    // Fetch all signatures for transactions involving this wallet and Deriverse
+
     const signatures = await connection.getSignaturesForAddress(publicKey, {
-      limit: 1000, // Fetch last 1000 transactions
+      limit: 1000,
     });
 
     console.log(`Found ${signatures.length} transactions`);
 
-    // Fetch full transaction details
-    const transactions = await Promise.all(
-      signatures.map(sig => 
+    const transactionResponses = await Promise.all(
+      signatures.map((sig) =>
         connection.getTransaction(sig.signature, {
-          maxSupportedTransactionVersion: 0
+          maxSupportedTransactionVersion: 0,
         })
       )
     );
 
-    // Parse transactions into our TradeTransaction format
     const trades: TradeTransaction[] = [];
-    
-    for (const tx of transactions) {
+
+    for (let i = 0; i < transactionResponses.length; i++) {
+      const tx = transactionResponses[i];
+      const signature = signatures[i].signature;
       if (!tx) continue;
-      
-      // TODO: Parse transaction data based on Deriverse's format
-      // This is where you'll decode the trade data from the transaction
-      // For now, returning empty array
+
+      const txLike = tx as Parameters<typeof parseDeriverseTransaction>[0];
+
+      if (!isDeriverseTransaction(txLike)) continue;
+
+      const parsed = parseDeriverseTransaction(txLike, signature);
+      if (parsed) {
+        trades.push(parsed);
+      } else {
+
+        trades.push(fallbackTradeFromTx(signature, tx, 'DERIVERSE-UNPARSED'));
+      }
     }
 
     return trades;
