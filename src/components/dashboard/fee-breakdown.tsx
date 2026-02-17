@@ -2,6 +2,7 @@
 
 import { FeeBreakdownItem, OrderTypeStat } from '@/lib/analytics/metrics';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { Card } from '@/components/ui/card';
 
 interface FeeBreakdownProps {
   feeBreakdown: FeeBreakdownItem[];
@@ -9,15 +10,26 @@ interface FeeBreakdownProps {
   loading: boolean;
 }
 
-const COLORS = ['#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#6366f1'];
+const COLORS = ['#f0b429', '#22c55e', '#3b82f6', '#ef4444', '#a855f7'];
+
+const CustomTooltip = ({ active, payload }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-[#0d1117] shadow-xl px-3 py-2 border border-[#1e2a3a] rounded-lg">
+      <p className="font-mono text-[11px] text-gray-300">
+        {payload[0].name}: {Number(payload[0].value).toFixed(1)}%
+      </p>
+    </div>
+  );
+};
 
 export function FeeBreakdown({ feeBreakdown, orderTypeStats, loading }: FeeBreakdownProps) {
   if (loading) {
     return (
-      <div className="bg-white rounded-lg p-6 shadow">
-        <div className="h-4 bg-gray-200 rounded w-1/3 mb-4 animate-pulse" />
-        <div className="h-48 bg-gray-100 rounded animate-pulse" />
-      </div>
+      <Card className="bg-[#0d1117] p-5 border-[#1e2a3a] rounded-xl">
+        <div className="bg-[#1e2a3a] mb-4 rounded w-1/3 h-4 animate-pulse" />
+        <div className="bg-[#080d13] rounded-lg h-52 animate-pulse" />
+      </Card>
     );
   }
 
@@ -26,10 +38,12 @@ export function FeeBreakdown({ feeBreakdown, orderTypeStats, loading }: FeeBreak
 
   if (!hasFees && !hasOrderTypes) {
     return (
-      <div className="bg-white rounded-lg p-6 shadow">
-        <h3 className="text-lg font-semibold mb-4">Fee & Order Type</h3>
-        <p className="text-gray-500 text-sm">No fee breakdown or order type data yet.</p>
-      </div>
+      <Card className="bg-[#0d1117] p-5 border-[#1e2a3a] rounded-xl">
+        <p className="mb-4 font-mono font-semibold text-[10px] text-gray-500 uppercase tracking-widest">
+          Fee & Order Type
+        </p>
+        <p className="font-mono text-gray-600 text-sm">No fee breakdown or order type data yet.</p>
+      </Card>
     );
   }
 
@@ -37,68 +51,102 @@ export function FeeBreakdown({ feeBreakdown, orderTypeStats, loading }: FeeBreak
     name: f.label,
     value: f.percentage,
     color: COLORS[i % COLORS.length],
+    amount: f.amount,
   }));
 
   return (
-    <div className="bg-white rounded-lg p-6 shadow">
-      <h3 className="text-lg font-semibold mb-4">Fee Composition & Order Type</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <Card className="bg-[#0d1117] p-5 border-[#1e2a3a] rounded-xl">
+      <p className="mb-5 font-mono font-semibold text-[10px] text-gray-500 uppercase tracking-widest">
+        Fee Composition & Order Types
+      </p>
+
+      <div className="gap-6 grid grid-cols-1 md:grid-cols-2">
+        {/* Pie + legend */}
         {hasFees && (
           <div>
-            <h4 className="text-sm font-medium text-gray-600 mb-2">Fee breakdown</h4>
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={80}
-                  paddingAngle={2}
-                  dataKey="value"
-                  nameKey="name"
-                  label={({ name, value }) => `${name} ${value.toFixed(0)}%`}
-                >
-                  {pieData.map((entry, i) => (
-                    <Cell key={entry.name} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value?: number) =>
-                    typeof value === 'number' ? `${value.toFixed(1)}%` : ''
-                  }
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <ul className="mt-2 space-y-1 text-sm text-gray-600">
-              {feeBreakdown.map((f) => (
-                <li key={f.label}>
-                  {f.label}: ${f.amount.toFixed(4)} ({f.percentage.toFixed(1)}%)
-                </li>
-              ))}
-            </ul>
+            <p className="mb-3 font-mono text-[10px] text-gray-600 uppercase tracking-widest">
+              Fee breakdown
+            </p>
+            <div className="flex items-center gap-4">
+              <ResponsiveContainer width={120} height={120}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={36}
+                    outerRadius={55}
+                    paddingAngle={3}
+                    dataKey="value"
+                    nameKey="name"
+                    strokeWidth={0}
+                  >
+                    {pieData.map((entry, i) => (
+                      <Cell key={entry.name} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+
+              <div className="flex flex-col gap-2">
+                {pieData.map((entry) => (
+                  <div key={entry.name} className="flex items-center gap-2">
+                    <span
+                      className="flex-shrink-0 rounded-full w-2 h-2"
+                      style={{ background: entry.color }}
+                    />
+                    <div>
+                      <p className="font-mono text-[11px] text-gray-300 leading-none">{entry.name}</p>
+                      <p className="mt-0.5 font-mono text-[10px] text-gray-600">
+                        ${entry.amount.toFixed(4)} · {entry.value.toFixed(1)}%
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
+
+        {/* Order type stats */}
         {hasOrderTypes && (
           <div>
-            <h4 className="text-sm font-medium text-gray-600 mb-2">Order type performance</h4>
-            <div className="space-y-2">
-              {orderTypeStats.map((s) => (
-                <div
-                  key={s.orderType}
-                  className="flex items-center justify-between p-2 rounded border border-gray-100"
-                >
-                  <span className="font-medium">{s.orderType}</span>
-                  <span className="text-gray-500 text-sm">{s.trades} trades</span>
-                  <span className={`text-sm ${s.pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {s.pnl >= 0 ? '+' : ''}${s.pnl.toFixed(2)} · {s.winRate.toFixed(0)}% win
-                  </span>
-                </div>
-              ))}
+            <p className="mb-3 font-mono text-[10px] text-gray-600 uppercase tracking-widest">
+              Order type performance
+            </p>
+            <div className="flex flex-col gap-2">
+              {orderTypeStats
+                .filter((s) => s.trades > 0)
+                .map((s) => (
+                  <div
+                    key={s.orderType}
+                    className="group flex justify-between items-center bg-[#080d13] px-3 py-2.5 border border-[#1e2a3a] hover:border-[#2a3a4a] rounded-lg transition-colors"
+                  >
+                    <span className="font-mono font-semibold text-[11px] text-gray-200">
+                      {s.orderType}
+                    </span>
+                    <span className="font-mono text-[10px] text-gray-600">
+                      {s.trades} trades
+                    </span>
+                    <div className="text-right">
+                      <p
+                        className={`font-mono text-[11px] font-semibold leading-none ${
+                          s.pnl >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'
+                        }`}
+                      >
+                        {s.pnl >= 0 ? '+' : ''}${s.pnl.toFixed(2)}
+                      </p>
+                      <p className="mt-0.5 font-mono text-[10px] text-gray-600">
+                        {s.winRate.toFixed(0)}% win
+                      </p>
+                    </div>
+                  </div>
+                ))}
             </div>
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

@@ -19,7 +19,7 @@ export function WalletConnectButton() {
     <div className="flex items-center gap-4">
       <WalletMultiButton />
       {connected && publicKey && (
-        <div className="text-sm">
+        <div className="text-amber-100 text-sm">
           Connected: {publicKey.toBase58().slice(0, 4)}...
           {publicKey.toBase58().slice(-4)}
         </div>

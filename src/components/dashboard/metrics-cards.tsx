@@ -1,7 +1,18 @@
 'use client';
 
 import { TradeMetrics } from '@/lib/analytics/metrics';
-import { TrendingUp, TrendingDown, DollarSign, Activity, Target, BarChart3 } from 'lucide-react';
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Activity,
+  Target,
+  BarChart3,
+  Zap,
+  Clock,
+} from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 interface MetricsCardsProps {
   metrics: TradeMetrics | null;
@@ -11,12 +22,12 @@ interface MetricsCardsProps {
 export function MetricsCards({ metrics, loading }: MetricsCardsProps) {
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="gap-3 grid grid-cols-2 lg:grid-cols-4">
         {[...Array(8)].map((_, i) => (
-          <div key={i} className="bg-white rounded-lg p-6 shadow animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
-            <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-          </div>
+          <div
+            key={i}
+            className="bg-[#0d1117] p-4 border border-[#1e2a3a] rounded-xl h-[100px] animate-pulse"
+          />
         ))}
       </div>
     );
@@ -27,87 +38,99 @@ export function MetricsCards({ metrics, loading }: MetricsCardsProps) {
   const cards = [
     {
       title: 'Total PnL',
-      value: `$${metrics.totalPnl.toFixed(2)}`,
-      change: `${metrics.totalPnlPercentage.toFixed(2)}%`,
+      value: `${metrics.totalPnl >= 0 ? '+' : ''}$${metrics.totalPnl.toFixed(2)}`,
+      sub: `${metrics.totalPnlPercentage.toFixed(2)}% return`,
       icon: DollarSign,
-      color: metrics.totalPnl >= 0 ? 'text-green-600' : 'text-red-600',
-      bgColor: metrics.totalPnl >= 0 ? 'bg-green-50' : 'bg-red-50',
+      positive: metrics.totalPnl >= 0,
+      accent: true,
     },
     {
       title: 'Win Rate',
       value: `${metrics.winRate.toFixed(1)}%`,
-      change: `${metrics.winningTrades}W / ${metrics.losingTrades}L`,
+      sub: `${metrics.winningTrades}W / ${metrics.losingTrades}L`,
       icon: Target,
-      color: metrics.winRate >= 50 ? 'text-green-600' : 'text-red-600',
-      bgColor: metrics.winRate >= 50 ? 'bg-green-50' : 'bg-red-50',
+      positive: metrics.winRate >= 50,
     },
     {
       title: 'Total Trades',
       value: metrics.totalTrades.toString(),
-      change: `${metrics.longTrades}L / ${metrics.shortTrades}S`,
+      sub: `${metrics.longTrades} long · ${metrics.shortTrades} short`,
       icon: Activity,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
+      neutral: true,
     },
     {
       title: 'Total Volume',
       value: `$${(metrics.totalVolume / 1000).toFixed(1)}K`,
-      change: `Fees: $${metrics.totalFees.toFixed(2)}`,
+      sub: `Fees: $${metrics.totalFees.toFixed(2)}`,
       icon: BarChart3,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
+      neutral: true,
     },
     {
       title: 'Profit Factor',
       value: metrics.profitFactor.toFixed(2),
-      change: `Avg Win: $${metrics.averageWin.toFixed(2)}`,
+      sub: `Avg win: $${metrics.averageWin.toFixed(2)}`,
       icon: TrendingUp,
-      color: metrics.profitFactor >= 1 ? 'text-green-600' : 'text-red-600',
-      bgColor: metrics.profitFactor >= 1 ? 'bg-green-50' : 'bg-red-50',
+      positive: metrics.profitFactor >= 1,
     },
     {
       title: 'Max Drawdown',
       value: `$${metrics.maxDrawdown.toFixed(2)}`,
-      change: `${metrics.maxDrawdownPercentage.toFixed(2)}%`,
+      sub: `${metrics.maxDrawdownPercentage.toFixed(2)}% of peak`,
       icon: TrendingDown,
-      color: 'text-red-600',
-      bgColor: 'bg-red-50',
+      positive: false,
     },
     {
       title: 'Largest Win',
       value: `$${metrics.largestWin.toFixed(2)}`,
-      change: `Loss: $${metrics.largestLoss.toFixed(2)}`,
-      icon: TrendingUp,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
+      sub: `Largest loss: $${Math.abs(metrics.largestLoss).toFixed(2)}`,
+      icon: Zap,
+      positive: true,
     },
     {
       title: 'Avg Duration',
       value: `${metrics.averageTradeDuration.toFixed(1)}h`,
-      change: `Long: ${metrics.longWinRate.toFixed(1)}% / Short: ${metrics.shortWinRate.toFixed(1)}%`,
-      icon: Activity,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
+      sub: `L: ${metrics.longWinRate.toFixed(0)}% · S: ${metrics.shortWinRate.toFixed(0)}% win`,
+      icon: Clock,
+      neutral: true,
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="gap-3 grid grid-cols-2 lg:grid-cols-4">
       {cards.map((card, index) => {
         const Icon = card.icon;
+        const valueColor = card.neutral
+          ? 'text-gray-100'
+          : card.positive
+          ? 'text-[#22c55e]'
+          : 'text-[#ef4444]';
+        const iconBg = card.neutral
+          ? 'bg-[#1e2a3a] text-gray-400'
+          : card.positive
+          ? 'bg-[#22c55e]/10 text-[#22c55e]'
+          : 'bg-[#ef4444]/10 text-[#ef4444]';
+
         return (
-          <div key={index} className="bg-white rounded-lg p-6 shadow hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-medium text-gray-600">{card.title}</p>
-              <div className={`p-2 rounded-lg ${card.bgColor}`}>
-                <Icon className={`w-5 h-5 ${card.color}`} />
+          <Card
+            key={index}
+            className={cn(
+              'group bg-[#0d1117] p-4 border-[#1e2a3a] hover:border-[#2a3a4a] rounded-xl transition-colors',
+              card.accent && 'border-[#f0b429]/30 hover:border-[#f0b429]/50'
+            )}
+          >
+            <div className="flex justify-between items-start mb-3">
+              <p className="font-mono font-semibold text-[10px] text-gray-500 uppercase leading-none tracking-widest">
+                {card.title}
+              </p>
+              <div className={cn('p-1.5 rounded-md', iconBg)}>
+                <Icon className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="space-y-1">
-              <p className={`text-2xl font-bold ${card.color}`}>{card.value}</p>
-              <p className="text-xs text-gray-500">{card.change}</p>
-            </div>
-          </div>
+            <p className={cn('mb-1 font-bold text-xl leading-none tracking-tight', valueColor)}>
+              {card.value}
+            </p>
+            <p className="mt-1.5 font-mono text-[10px] text-gray-600 leading-none">{card.sub}</p>
+          </Card>
         );
       })}
     </div>
