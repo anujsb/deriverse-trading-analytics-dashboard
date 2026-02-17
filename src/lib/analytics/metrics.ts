@@ -3,31 +3,31 @@ import { trades } from '@/lib/db/schema';
 import { eq, and, gte, lte, sql, desc } from 'drizzle-orm';
 
 export interface TradeMetrics {
-  // Overall Performance
+
   totalPnl: number;
   totalPnlPercentage: number;
   totalVolume: number;
   totalFees: number;
   
-  // Trade Statistics
+
   totalTrades: number;
   winningTrades: number;
   losingTrades: number;
   winRate: number;
   
-  // Average Metrics
+
   averageWin: number;
   averageLoss: number;
-  averageTradeDuration: number; // in hours
-  profitFactor: number; // total wins / total losses
+  averageTradeDuration: number; 
+  profitFactor: number; 
   
-  // Risk Metrics
+
   largestWin: number;
   largestLoss: number;
   maxDrawdown: number;
   maxDrawdownPercentage: number;
   
-  // Directional Analysis
+
   longTrades: number;
   shortTrades: number;
   longWinRate: number;
@@ -35,8 +35,16 @@ export interface TradeMetrics {
   longPnl: number;
   shortPnl: number;
   
-  // Symbol Performance
+
   symbolStats: SymbolStats[];
+
+
+  timeOfDayStats: TimeOfDayBucket[];
+  sessionStats: SessionStats[];
+
+
+  feeBreakdown: FeeBreakdownItem[];
+  orderTypeStats: OrderTypeStat[];
 }
 
 export interface SymbolStats {
@@ -47,24 +55,56 @@ export interface SymbolStats {
   volume: number;
 }
 
+export interface TimeOfDayBucket {
+  label: string; 
+  hourStart: number;
+  hourEnd: number;
+  trades: number;
+  pnl: number;
+  winRate: number;
+}
+
+export interface SessionStats {
+  session: string;
+  trades: number;
+  pnl: number;
+  winRate: number;
+}
+
+export interface FeeBreakdownItem {
+  label: string; 
+  amount: number;
+  percentage: number;
+}
+
+export interface OrderTypeStat {
+  orderType: string; 
+  trades: number;
+  pnl: number;
+  winRate: number;
+}
+
 export interface TimeSeriesData {
   date: string;
   cumulativePnl: number;
   dailyPnl: number;
   tradeCount: number;
+
+  drawdown: number;
+
+  cumulativeFees: number;
+  dailyFees: number;
 }
 
 export class AnalyticsEngine {
-  /**
-   * Calculate comprehensive trading metrics
-   */
+
   async calculateMetrics(
     userId: string,
     startDate?: Date,
     endDate?: Date,
     symbol?: string
   ): Promise<TradeMetrics> {
-    // Build query conditions
+
     const conditions = [eq(trades.userId, userId)];
     
     if (startDate) {
@@ -77,33 +117,41 @@ export class AnalyticsEngine {
       conditions.push(eq(trades.symbol, symbol));
     }
 
-    // Fetch all trades matching conditions
+
     const userTrades = await db
       .select()
       .from(trades)
       .where(and(...conditions))
       .orderBy(trades.timestamp);
 
-    // Filter only closed trades for PnL calculations
+
     const closedTrades = userTrades.filter(t => t.status === 'CLOSED' && t.pnl !== null);
 
+
+    const totalTradesCount = userTrades.length;
+    const totalFeesAll = userTrades.reduce((sum, t) => sum + parseFloat(t.fee || '0'), 0);
+
     if (closedTrades.length === 0) {
-      return this.getEmptyMetrics();
+      return {
+        ...this.getEmptyMetrics(),
+        totalTrades: totalTradesCount,
+        totalFees: totalFeesAll,
+      };
     }
 
-    // Calculate basic metrics
+
     const totalPnl = closedTrades.reduce((sum, t) => sum + parseFloat(t.pnl || '0'), 0);
     const totalVolume = closedTrades.reduce((sum, t) => sum + parseFloat(t.size || '0') * parseFloat(t.entryPrice || '0'), 0);
     const totalFees = closedTrades.reduce((sum, t) => sum + parseFloat(t.fee || '0'), 0);
 
-    // Win/Loss statistics
+
     const winningTrades = closedTrades.filter(t => parseFloat(t.pnl || '0') > 0);
     const losingTrades = closedTrades.filter(t => parseFloat(t.pnl || '0') < 0);
     
     const totalWins = winningTrades.reduce((sum, t) => sum + parseFloat(t.pnl || '0'), 0);
     const totalLosses = Math.abs(losingTrades.reduce((sum, t) => sum + parseFloat(t.pnl || '0'), 0));
 
-    // Directional analysis
+
     const longTrades = closedTrades.filter(t => t.type === 'LONG');
     const shortTrades = closedTrades.filter(t => t.type === 'SHORT');
     
@@ -113,55 +161,141 @@ export class AnalyticsEngine {
     const longPnl = longTrades.reduce((sum, t) => sum + parseFloat(t.pnl || '0'), 0);
     const shortPnl = shortTrades.reduce((sum, t) => sum + parseFloat(t.pnl || '0'), 0);
 
-    // Find largest win/loss
+
     const pnlValues = closedTrades.map(t => parseFloat(t.pnl || '0'));
     const largestWin = Math.max(...pnlValues);
     const largestLoss = Math.min(...pnlValues);
 
-    // Calculate drawdown
+
     const { maxDrawdown, maxDrawdownPercentage } = this.calculateDrawdown(closedTrades);
 
-    // Calculate average trade duration
+
     const averageTradeDuration = this.calculateAverageDuration(closedTrades);
 
-    // Symbol-specific stats
+
     const symbolStats = await this.calculateSymbolStats(closedTrades);
+
+    const timeOfDayStats = this.calculateTimeOfDayStats(closedTrades);
+    const sessionStats = this.calculateSessionStats(closedTrades);
+    const feeBreakdown = this.calculateFeeBreakdown(userTrades);
+    const orderTypeStats = this.calculateOrderTypeStats(closedTrades);
 
     return {
       totalPnl,
       totalPnlPercentage: totalVolume > 0 ? (totalPnl / totalVolume) * 100 : 0,
       totalVolume,
       totalFees,
-      
       totalTrades: closedTrades.length,
       winningTrades: winningTrades.length,
       losingTrades: losingTrades.length,
       winRate: (winningTrades.length / closedTrades.length) * 100,
-      
       averageWin: winningTrades.length > 0 ? totalWins / winningTrades.length : 0,
       averageLoss: losingTrades.length > 0 ? totalLosses / losingTrades.length : 0,
       averageTradeDuration,
       profitFactor: totalLosses > 0 ? totalWins / totalLosses : totalWins,
-      
       largestWin,
       largestLoss,
       maxDrawdown,
       maxDrawdownPercentage,
-      
       longTrades: longTrades.length,
       shortTrades: shortTrades.length,
       longWinRate: longTrades.length > 0 ? (longWins / longTrades.length) * 100 : 0,
       shortWinRate: shortTrades.length > 0 ? (shortWins / shortTrades.length) * 100 : 0,
       longPnl,
       shortPnl,
-      
       symbolStats,
+      timeOfDayStats,
+      sessionStats,
+      feeBreakdown,
+      orderTypeStats,
     };
   }
 
-  /**
-   * Calculate maximum drawdown
-   */
+  private calculateTimeOfDayStats(closedTrades: any[]): TimeOfDayBucket[] {
+    const buckets = [
+      { label: '00-06', hourStart: 0, hourEnd: 6 },
+      { label: '06-12', hourStart: 6, hourEnd: 12 },
+      { label: '12-18', hourStart: 12, hourEnd: 18 },
+      { label: '18-24', hourStart: 18, hourEnd: 24 },
+    ];
+    return buckets.map(({ label, hourStart, hourEnd }) => {
+      const subset = closedTrades.filter((t) => {
+        const h = new Date(t.timestamp).getUTCHours();
+        return h >= hourStart && h < hourEnd;
+      });
+      const pnl = subset.reduce((s, t) => s + parseFloat(t.pnl || '0'), 0);
+      const wins = subset.filter((t) => parseFloat(t.pnl || '0') > 0).length;
+      return {
+        label,
+        hourStart,
+        hourEnd,
+        trades: subset.length,
+        pnl,
+        winRate: subset.length ? (wins / subset.length) * 100 : 0,
+      };
+    });
+  }
+
+  private calculateSessionStats(closedTrades: any[]): SessionStats[] {
+    const sessions = [
+      { session: 'Morning' as const, start: 6, end: 12 },
+      { session: 'Afternoon' as const, start: 12, end: 18 },
+      { session: 'Evening' as const, start: 18, end: 24 },
+      { session: 'Night' as const, start: 0, end: 6 },
+    ];
+    return sessions.map(({ session, start, end }) => {
+      const subset = closedTrades.filter((t) => {
+        const h = new Date(t.timestamp).getUTCHours();
+        if (start > end) return h >= start || h < end;
+        return h >= start && h < end;
+      });
+      const pnl = subset.reduce((s, t) => s + parseFloat(t.pnl || '0'), 0);
+      const wins = subset.filter((t) => parseFloat(t.pnl || '0') > 0).length;
+      return {
+        session,
+        trades: subset.length,
+        pnl,
+        winRate: subset.length ? (wins / subset.length) * 100 : 0,
+      };
+    });
+  }
+
+  private calculateFeeBreakdown(allTrades: any[]): FeeBreakdownItem[] {
+    const total = allTrades.reduce((s, t) => s + parseFloat(t.fee || '0'), 0);
+    if (total <= 0) return [];
+    const byKey = new Map<string, number>();
+    for (const t of allTrades) {
+      const key = (t.feeType as string) || (t.symbol as string) || 'Other';
+      byKey.set(key, (byKey.get(key) ?? 0) + parseFloat(t.fee || '0'));
+    }
+    return Array.from(byKey.entries()).map(([label, amount]) => ({
+      label,
+      amount,
+      percentage: (amount / total) * 100,
+    }));
+  }
+
+  private calculateOrderTypeStats(closedTrades: any[]): OrderTypeStat[] {
+    const byType = new Map<string, { pnl: number; wins: number; count: number }>();
+    for (const t of closedTrades) {
+      const type = (t.orderType as string) || 'UNKNOWN';
+      const pnl = parseFloat(t.pnl || '0');
+      let row = byType.get(type);
+      if (!row) row = { pnl: 0, wins: 0, count: 0 };
+      row.count += 1;
+      row.pnl += pnl;
+      if (pnl > 0) row.wins += 1;
+      byType.set(type, row);
+    }
+    return Array.from(byType.entries()).map(([orderType, row]) => ({
+      orderType,
+      trades: row.count,
+      pnl: row.pnl,
+      winRate: row.count ? (row.wins / row.count) * 100 : 0,
+    }));
+  }
+
+
   private calculateDrawdown(closedTrades: any[]): { maxDrawdown: number; maxDrawdownPercentage: number } {
     let peak = 0;
     let maxDrawdown = 0;
@@ -170,12 +304,12 @@ export class AnalyticsEngine {
     for (const trade of closedTrades) {
       cumulativePnl += parseFloat(trade.pnl || '0');
       
-      // Update peak if we've reached a new high
+
       if (cumulativePnl > peak) {
         peak = cumulativePnl;
       }
       
-      // Calculate current drawdown
+
       const drawdown = peak - cumulativePnl;
       
       if (drawdown > maxDrawdown) {
@@ -188,9 +322,7 @@ export class AnalyticsEngine {
     return { maxDrawdown, maxDrawdownPercentage };
   }
 
-  /**
-   * Calculate average trade duration
-   */
+
   private calculateAverageDuration(closedTrades: any[]): number {
     // Group trades by signature to find entry/exit pairs
     const tradeMap = new Map<string, any[]>();
@@ -206,7 +338,7 @@ export class AnalyticsEngine {
     let totalDuration = 0;
     let tradeCount = 0;
 
-    // Calculate duration for each complete trade
+
     for (const [_, tradePair] of tradeMap) {
       if (tradePair.length >= 1) {
         const entryTime = new Date(tradePair[0].timestamp).getTime();
@@ -223,13 +355,11 @@ export class AnalyticsEngine {
     return tradeCount > 0 ? totalDuration / tradeCount : 0;
   }
 
-  /**
-   * Calculate per-symbol statistics
-   */
+
   private async calculateSymbolStats(closedTrades: any[]): Promise<SymbolStats[]> {
     const symbolMap = new Map<string, any[]>();
     
-    // Group trades by symbol
+
     for (const trade of closedTrades) {
       const symbol = trade.symbol;
       if (!symbolMap.has(symbol)) {
@@ -254,13 +384,11 @@ export class AnalyticsEngine {
       });
     }
 
-    // Sort by PnL descending
+
     return stats.sort((a, b) => b.pnl - a.pnl);
   }
 
-  /**
-   * Get time series data for charts
-   */
+
   async getTimeSeriesData(
     userId: string,
     startDate?: Date,
@@ -281,7 +409,7 @@ export class AnalyticsEngine {
       .where(and(...conditions))
       .orderBy(trades.timestamp);
 
-    // Group trades by date
+
     const dateMap = new Map<string, any[]>();
     
     for (const trade of userTrades) {
@@ -292,28 +420,34 @@ export class AnalyticsEngine {
       dateMap.get(dateKey)?.push(trade);
     }
 
-    // Calculate cumulative PnL over time
     let cumulativePnl = 0;
+    let cumulativeFees = 0;
+    let peak = 0;
     const timeSeriesData: TimeSeriesData[] = [];
 
     for (const [date, dayTrades] of Array.from(dateMap.entries()).sort()) {
       const dailyPnl = dayTrades.reduce((sum, t) => sum + parseFloat(t.pnl || '0'), 0);
+      const dailyFees = dayTrades.reduce((sum, t) => sum + parseFloat(t.fee || '0'), 0);
       cumulativePnl += dailyPnl;
-      
+      cumulativeFees += dailyFees;
+      if (cumulativePnl > peak) peak = cumulativePnl;
+      const drawdown = peak - cumulativePnl;
+
       timeSeriesData.push({
         date,
         cumulativePnl,
         dailyPnl,
         tradeCount: dayTrades.length,
+        drawdown,
+        cumulativeFees,
+        dailyFees,
       });
     }
 
     return timeSeriesData;
   }
 
-  /**
-   * Return empty metrics structure
-   */
+
   private getEmptyMetrics(): TradeMetrics {
     return {
       totalPnl: 0,
@@ -339,6 +473,10 @@ export class AnalyticsEngine {
       longPnl: 0,
       shortPnl: 0,
       symbolStats: [],
+      timeOfDayStats: [],
+      sessionStats: [],
+      feeBreakdown: [],
+      orderTypeStats: [],
     };
   }
 }

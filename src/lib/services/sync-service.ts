@@ -11,9 +11,8 @@ export class TradeSyncService {
     this.connection = new Connection(rpcEndpoint, 'confirmed');
   }
 
-  /**
-   * Sync trades for a specific user
-   */
+
+  //  Sync trades for a specific user
   async syncUserTrades(walletAddress: string): Promise<{
     success: boolean;
     newTrades: number;
@@ -22,10 +21,10 @@ export class TradeSyncService {
     try {
       console.log(`Starting sync for wallet: ${walletAddress}`);
 
-      // 1. Ensure user exists in database
+
       await this.ensureUserExists(walletAddress);
 
-      // 2. Get last synced trade timestamp
+
       const lastTrade = await db
         .select()
         .from(trades)
@@ -35,17 +34,17 @@ export class TradeSyncService {
 
       const lastSyncTimestamp = lastTrade[0]?.timestamp || new Date(0);
 
-      // 3. Fetch new trades from blockchain
+
       const blockchainTrades = await fetchUserTrades(walletAddress, this.connection);
 
-      // 4. Filter only new trades
+
       const newTrades = blockchainTrades.filter(
         trade => new Date(trade.timestamp) > lastSyncTimestamp
       );
 
       console.log(`Found ${newTrades.length} new trades`);
 
-      // 5. Insert new trades (skip duplicates by signature)
+
       if (newTrades.length > 0) {
         await db.insert(trades).values(
           newTrades.map(trade => ({
@@ -84,9 +83,7 @@ export class TradeSyncService {
     }
   }
 
-  /**
-   * Ensure user record exists
-   */
+
   private async ensureUserExists(walletAddress: string) {
     const existingUser = await db
       .select()

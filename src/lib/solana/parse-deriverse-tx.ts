@@ -193,7 +193,7 @@ const DERIVERSE_TAG = {
   NEW_SPOT_ORDER: 10,
 } as const;
 
-const PRICE_DECIMALS = 1_000_000_000; // SDK uses price * 1e9 for perp
+const PRICE_DECIMALS = 1_000_000_000; 
 
 
 //  * Decode from @deriverse/kit.
@@ -212,15 +212,15 @@ function decodeInstructionData(data: string | Uint8Array): DecodedInstruction | 
 
     const tag = buf[0];
 
-    // Exact layout: newPerpOrderData(tag=19, ioc, leverage, orderType, side, _, _, _, instrId, price, amount, edgePrice) — 40 bytes
+
     if (tag === DERIVERSE_TAG.NEW_PERP_ORDER && buf.length >= 40) {
       const orderType = buf[3];
-      const side = buf[4]; // 0 = buy/long, 1 = sell/short
+      const side = buf[4]; 
       const instrId = buf.readUInt32LE(12);
       const priceRaw = Number(buf.readBigInt64LE(16));
       const amountRaw = Number(buf.readBigInt64LE(24));
       const price = priceRaw / PRICE_DECIMALS;
-      const size = amountRaw / PRICE_DECIMALS; // asset amount; SDK may use asset decimals per instrument
+      const size = amountRaw / PRICE_DECIMALS; 
       return {
         instructionType: tag,
         market: `PERP-${instrId}`,
@@ -231,7 +231,7 @@ function decodeInstructionData(data: string | Uint8Array): DecodedInstruction | 
       };
     }
 
-    // Exact layout: newSpotOrderData(tag=10, ioc, orderType, side, instrId, price, amount, edgePrice) — 32 bytes
+
     if (tag === DERIVERSE_TAG.NEW_SPOT_ORDER && buf.length >= 32) {
       const orderType = buf[2];
       const side = buf[3];
@@ -250,7 +250,7 @@ function decodeInstructionData(data: string | Uint8Array): DecodedInstruction | 
       };
     }
 
-    // Fallback: best-effort for unknown tags (e.g. from a different program version)
+    // Fallback
     if (buf.length < 2) return null;
     let offset = 1;
     const readU64 = () => {
