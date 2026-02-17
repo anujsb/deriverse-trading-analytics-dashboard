@@ -109,7 +109,7 @@ export default function DashboardPage() {
 
   if (!connected) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-[calc(100vh-3.5rem)] flex items-center justify-center p-6">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Deriverse Trading Analytics
@@ -124,25 +124,28 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div>
+      {/* Top bar (inside main content area) */}
+      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b">
+        <div className="px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Trading Dashboard</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Wallet: {publicKey?.toBase58().slice(0, 4)}...{publicKey?.toBase58().slice(-4)}
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+                Trading Dashboard
+              </h1>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                Wallet: {publicKey?.toBase58().slice(0, 4)}...
+                {publicKey?.toBase58().slice(-4)}
               </p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <button
                 onClick={handleSync}
                 disabled={syncing}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-                {syncing ? 'Syncing...' : 'Sync Trades'}
+                <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
+                {syncing ? "Syncing..." : "Sync"}
               </button>
               <WalletConnectButton />
             </div>
@@ -150,36 +153,42 @@ export default function DashboardPage() {
         </div>
       </header>
 
+      <main className="px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
+        <section id="filters" className="scroll-mt-24">
+          <Filters onFilterChange={setFilters} symbols={symbols} />
+        </section>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Filters onFilterChange={setFilters} symbols={symbols} />
-        <div className="mb-8">
+        <section id="overview" className="scroll-mt-24 mb-8">
           <MetricsCards metrics={metrics} loading={loading} />
-        </div>
-        <div className="mb-8">
-          <PnLChart data={timeSeriesData} loading={loading} />
-        </div>
-        <div className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        </section>
+
+        <section className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+          <div className="xl:col-span-2">
+            <PnLChart data={timeSeriesData} loading={loading} />
+          </div>
           <FeeChart data={timeSeriesData} loading={loading} />
-        </div>
-        <div className="mb-8">
           <SymbolPerformance symbols={metrics?.symbolStats || []} loading={loading} />
-        </div>
-        <div className="mb-8">
+        </section>
+
+        <section id="time" className="scroll-mt-24 mb-8">
           <TimeOfDaySection
             timeOfDayStats={metrics?.timeOfDayStats ?? []}
             sessionStats={metrics?.sessionStats ?? []}
             loading={loading}
           />
-        </div>
-        <div className="mb-8">
+        </section>
+
+        <section id="fees" className="scroll-mt-24 mb-8">
           <FeeBreakdown
             feeBreakdown={metrics?.feeBreakdown ?? []}
             orderTypeStats={metrics?.orderTypeStats ?? []}
             loading={loading}
           />
-        </div>
-        <TradeHistory trades={trades} loading={loading} userId={publicKey?.toBase58()} />
+        </section>
+
+        <section id="trades" className="scroll-mt-24">
+          <TradeHistory trades={trades} loading={loading} userId={publicKey?.toBase58()} />
+        </section>
       </main>
     </div>
   );
