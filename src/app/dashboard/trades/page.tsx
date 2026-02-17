@@ -3,14 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletConnectButton } from '@/components/wallet-connect-button';
-import { MetricsCards } from '@/components/dashboard/metrics-cards';
-import { PnLChart } from '@/components/dashboard/pnl-chart';
-import { SymbolPerformance } from '@/components/dashboard/symbol-performance';
+import { TradeHistory } from '@/components/dashboard/trade-history';
+import { FeeBreakdown } from '@/components/dashboard/fee-breakdown';
+import { FeeChart } from '@/components/dashboard/fee-chart';
 import { Filters, FilterState } from '@/components/dashboard/filters';
 import { TradeMetrics, TimeSeriesData } from '@/lib/analytics/metrics';
-import { RefreshCw, TrendingUp } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 
-export default function DashboardPage() {
+export default function TradesPage() {
   const { publicKey, connected } = useWallet();
   const [metrics, setMetrics] = useState<TradeMetrics | null>(null);
   const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesData[]>([]);
@@ -96,25 +96,8 @@ export default function DashboardPage() {
   if (!connected) {
     return (
       <div className="flex justify-center items-center bg-[#080d13] min-h-screen">
-        <div className="px-6 text-center">
-          {/* Decorative ring */}
-          <div className="inline-flex relative justify-center items-center mb-8">
-            <div className="absolute border border-[#f0b429]/20 rounded-full w-32 h-32 animate-ping" style={{ animationDuration: '3s' }} />
-            <div className="absolute border border-[#f0b429]/30 rounded-full w-24 h-24" />
-            <div className="relative flex justify-center items-center bg-[#f0b429]/10 rounded-full w-16 h-16">
-              <TrendingUp className="w-7 h-7 text-[#f0b429]" />
-            </div>
-          </div>
-
-          <h1 className="mb-3 font-bold text-white text-4xl tracking-tight">
-            Deriverse Analytics
-          </h1>
-          <p className="mb-2 font-mono text-[#f0b429] text-sm uppercase tracking-widest">
-            On-chain Trading Intelligence
-          </p>
-          <p className="mx-auto mb-10 max-w-xs text-gray-500 text-sm leading-relaxed">
-            Connect your Solana wallet to unlock full PnL tracking, fee analysis, and performance insights.
-          </p>
+        <div className="text-center">
+          <p className="mb-4 text-gray-400">Connect your wallet to view trade history</p>
           <WalletConnectButton />
         </div>
       </div>
@@ -128,14 +111,9 @@ export default function DashboardPage() {
         <div className="px-5 sm:px-8 py-3.5">
           <div className="flex justify-between items-center">
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-bold text-white text-lg tracking-tight">
-                  Overview
-                </h1>
-                <span className="hidden sm:inline-block bg-[#f0b429]/10 px-2 py-0.5 border border-[#f0b429]/20 rounded font-mono font-semibold text-[#f0b429] text-[10px] uppercase tracking-widest">
-                  Live
-                </span>
-              </div>
+              <h1 className="font-bold text-white text-lg tracking-tight">
+                Trades & Fees
+              </h1>
               <p className="mt-0.5 font-mono text-[11px] text-gray-600">
                 {publicKey?.toBase58().slice(0, 6)}...{publicKey?.toBase58().slice(-6)}
               </p>
@@ -161,20 +139,22 @@ export default function DashboardPage() {
           <Filters onFilterChange={setFilters} symbols={symbols} />
         </div>
 
-        {/* Metrics */}
-        <div className="mb-6">
-          <MetricsCards metrics={metrics} loading={loading} />
+        {/* Fee Chart + Breakdown side by side */}
+        <div className="gap-4 grid grid-cols-1 xl:grid-cols-2 mb-6">
+          <FeeChart data={timeSeriesData} loading={loading} />
+          <FeeBreakdown
+            feeBreakdown={metrics?.feeBreakdown ?? []}
+            orderTypeStats={metrics?.orderTypeStats ?? []}
+            loading={loading}
+          />
         </div>
 
-        {/* Charts Grid */}
-        <div className="gap-4 grid grid-cols-1 xl:grid-cols-3">
-          <div className="xl:col-span-2">
-            <PnLChart data={timeSeriesData} loading={loading} />
-          </div>
-          <div className="xl:col-span-1">
-            <SymbolPerformance symbols={metrics?.symbolStats || []} loading={loading} />
-          </div>
-        </div>
+        {/* Trade History full width */}
+        <TradeHistory
+          trades={trades}
+          loading={loading}
+          userId={publicKey?.toBase58()}
+        />
       </main>
     </div>
   );
