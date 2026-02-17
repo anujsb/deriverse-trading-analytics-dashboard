@@ -24,10 +24,18 @@ export default function HomePage() {
         </span>
         <div className="flex items-center gap-5">
           <a
+            href="https://x.com/anujsbhuyar"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-mono font-semibold text-[10px] text-gray-300 hover:text-[#f0b429] uppercase tracking-widest transition-colors"
+          >
+            Twitter
+          </a>
+          <a
             href="https://github.com/anujsb"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-mono text-[10px] text-gray-600 hover:text-[#f0b429] uppercase tracking-widest transition-colors"
+            className="font-mono font-semibold text-[10px] text-gray-300 hover:text-[#f0b429] uppercase tracking-widest transition-colors"
           >
             GitHub
           </a>
@@ -35,7 +43,7 @@ export default function HomePage() {
             href="https://www.linkedin.com/in/anujbhuyar/"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-mono text-[10px] text-gray-600 hover:text-[#f0b429] uppercase tracking-widest transition-colors"
+            className="font-mono font-semibold text-[10px] text-gray-300 hover:text-[#f0b429] uppercase tracking-widest transition-colors"
           >
             LinkedIn
           </a>
@@ -43,7 +51,7 @@ export default function HomePage() {
             href="https://anuj-bhuyar-ten.vercel.app/"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-mono text-[10px] text-gray-600 hover:text-[#f0b429] uppercase tracking-widest transition-colors"
+            className="font-mono font-semibold text-[10px] text-gray-300 hover:text-[#f0b429] uppercase tracking-widest transition-colors"
           >
             Portfolio
           </a>
