@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Deriverse Trading Analytics Dashboard
 
-## Getting Started
+Analytics and trade journal for [Deriverse](https://deriverse.io) on Solana. Connect a wallet, sync your trades, and see PnL, win rate, volume, drawdown, fees, and time-of-day stats.
 
-First, run the development server:
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+cp .env.example .env
+# Fill in DATABASE_URL (required). See .env.example for the rest.
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000, connect your Solana wallet, then hit **Sync Trades** to pull in on-chain activity.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## What you need
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Postgres** – Neon, Supabase, or any Postgres. The app stores synced trades and annotations here.
+- **Deriverse program ID** – So we only treat your Deriverse txs as trades. Defaults are in `.env.example`; override with `PROGRAM_ID` or `PROGRAM_IDS` if you use a different deployment.
+- **Solana RPC** – For fetching transactions. Default is devnet; set `NEXT_PUBLIC_SOLANA_RPC_URL` for mainnet or a custom RPC.
 
-## Learn More
+## What’s in the app
 
-To learn more about Next.js, take a look at the following resources:
+- **Overview** – PnL, win rate, volume, fees, largest win/loss, drawdown, long/short breakdown.
+- **Charts** – Cumulative PnL (with drawdown), fees over time, time-of-day and session performance.
+- **Trade history** – Filters by date, symbol, and status (open/closed). Notes per trade (annotations).
+- **Open vs closed** – Open positions show until you close them on Deriverse; after the next sync, those rows update to closed with real PnL.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Trades are derived from Deriverse **Program data** logs (place order + fill events), with position tracking so closed trades get correct realized PnL and duration.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploy
 
-## Deploy on Vercel
+Set `DATABASE_URL` and, if needed, `PROGRAM_ID` / `PROGRAM_IDS` and `NEXT_PUBLIC_SOLANA_RPC_URL` in your host (e.g. Vercel). Run migrations:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+pnpm drizzle-kit push
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Docs
+
+- **[docs/INTEGRATION.md](docs/INTEGRATION.md)** – Program ID, env vars, API reference (for integrators/sponsors).
+- **[docs/DEVELOPER.md](docs/DEVELOPER.md)** – Data flow, where things live in the codebase, adding metrics/filters.
+- **[docs/DERIVERSE_INSTRUCTION_LAYOUT.md](docs/DERIVERSE_INSTRUCTION_LAYOUT.md)** – Where instruction/log layout comes from (SDK, logs_models).
+
+## Stack
+
+Next.js 16, React, Drizzle (Postgres), Solana web3.js, Recharts, Tailwind.

@@ -1,0 +1,1 @@
+ALTER TABLE "trades" ADD COLUMN "entry_timestamp" timestamp;
