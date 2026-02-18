@@ -56,6 +56,7 @@ export class TradeSyncService {
             status: trade.status,
             entryPrice: trade.entryPrice.toString(),
             exitPrice: trade.exitPrice?.toString() || null,
+            entryTimestamp: trade.entryTimestamp ? new Date(trade.entryTimestamp) : null,
             size: trade.size.toString(),
             fee: trade.fee.toString(),
             pnl: trade.pnl?.toString() || null,

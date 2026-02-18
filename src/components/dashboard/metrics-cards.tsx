@@ -60,7 +60,9 @@ export function MetricsCards({ metrics, loading }: MetricsCardsProps) {
     },
     {
       title: 'Total Volume',
-      value: `$${(metrics.totalVolume / 1000).toFixed(1)}K`,
+      value: metrics.totalVolume >= 1000
+        ? `$${(metrics.totalVolume / 1000).toFixed(1)}K`
+        : `$${metrics.totalVolume.toFixed(2)}`,
       sub: `Fees: $${metrics.totalFees.toFixed(2)}`,
       icon: BarChart3,
       neutral: true,
@@ -88,7 +90,9 @@ export function MetricsCards({ metrics, loading }: MetricsCardsProps) {
     },
     {
       title: 'Avg Duration',
-      value: `${metrics.averageTradeDuration.toFixed(1)}h`,
+      value: metrics.averageTradeDuration > 0
+        ? `${metrics.averageTradeDuration.toFixed(1)}h`
+        : '—',
       sub: `L: ${metrics.longWinRate.toFixed(0)}% · S: ${metrics.shortWinRate.toFixed(0)}% win`,
       icon: Clock,
       neutral: true,

@@ -1,5 +1,6 @@
 import { Connection, PublicKey } from '@solana/web3.js';
-import { isDeriverseTransaction, parseDeriverseTransaction } from './parse-deriverse-tx';
+import { isDeriverseTransaction } from './parse-deriverse-tx';
+import { deriveTradesFromTransactions } from './derive-trades-from-logs';
 
 export interface TradeTransaction {
   signature: string;
@@ -12,30 +13,14 @@ export interface TradeTransaction {
   fee: number;
   pnl?: number;
   status: 'OPEN' | 'CLOSED';
+  /** When position was opened (for closed trades) - used for avg duration */
+  entryTimestamp?: number;
 }
 
-
-function fallbackTradeFromTx(
-  signature: string,
-  tx: { blockTime?: number | null; meta?: { fee?: number } | null },
-  symbolOverride?: string
-): TradeTransaction {
-  const timestamp = tx.blockTime != null ? tx.blockTime * 1000 : Date.now();
-  const feeLamports = tx.meta?.fee ?? 0;
-  const feeInSol = feeLamports / 1_000_000_000;
-
-  return {
-    signature,
-    timestamp,
-    type: 'LONG',
-    symbol: symbolOverride ?? 'Unknown',
-    entryPrice: 0,
-    size: 0,
-    fee: feeInSol,
-    status: 'CLOSED',
-  };
-}
-
+/**
+ * Fetches Deriverse transactions and derives closed trades with true PnL
+ * from Program data logs (fills + position tracking).
+ */
 export async function fetchUserTrades(
   walletAddress: string,
   connection: Connection
@@ -57,27 +42,31 @@ export async function fetchUserTrades(
       )
     );
 
-    const trades: TradeTransaction[] = [];
+    const deriverseTxs: { tx: unknown; signature: string; blockTime?: number | null; meta?: { fee?: number; logMessages?: string[] } | null }[] = [];
 
     for (let i = 0; i < transactionResponses.length; i++) {
       const tx = transactionResponses[i];
       const signature = signatures[i].signature;
-      if (!tx) continue;
-
-      const txLike = tx as Parameters<typeof parseDeriverseTransaction>[0];
-
+      if (!tx) {
+        console.warn('No transaction data for', signature);
+        continue;
+      }
+      const txLike = tx as Parameters<typeof isDeriverseTransaction>[0];
       if (!isDeriverseTransaction(txLike)) continue;
 
-      const parsed = parseDeriverseTransaction(txLike, signature);
-      if (parsed) {
-        trades.push(parsed);
-      } else {
-
-        trades.push(fallbackTradeFromTx(signature, tx, 'DERIVERSE-UNPARSED'));
-      }
+      deriverseTxs.push({
+        tx,
+        signature,
+        blockTime: tx.blockTime,
+        meta: tx.meta ? { fee: tx.meta.fee, logMessages: tx.meta.logMessages ?? undefined } : null,
+      });
     }
 
-    return trades;
+    console.log(`Deriving trades from ${deriverseTxs.length} Deriverse transactions`);
+
+    const trades = deriveTradesFromTransactions(deriverseTxs);
+
+    return trades.sort((a, b) => a.timestamp - b.timestamp);
   } catch (error) {
     console.error('Error fetching trades:', error);
     return [];

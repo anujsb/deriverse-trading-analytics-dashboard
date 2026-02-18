@@ -125,28 +125,52 @@ export class AnalyticsEngine {
       .orderBy(trades.timestamp);
 
 
-    const closedTrades = userTrades.filter(t => t.status === 'CLOSED' && t.pnl !== null);
-
+    const closedTrades = userTrades.filter(
+      (t) => t.status === "CLOSED" && t.pnl !== null
+    );
 
     const totalTradesCount = userTrades.length;
-    const totalFeesAll = userTrades.reduce((sum, t) => sum + parseFloat(t.fee || '0'), 0);
+    const totalFeesAll = userTrades.reduce(
+      (sum, t) => sum + parseFloat(t.fee || "0"),
+      0
+    );
+    const totalVolumeAll = userTrades.reduce(
+      (sum, t) =>
+        sum +
+        parseFloat(t.size || "0") * parseFloat(t.entryPrice || "0"),
+      0
+    );
+    const longAll = userTrades.filter((t) => t.type === "LONG").length;
+    const shortAll = userTrades.filter((t) => t.type === "SHORT").length;
 
     if (closedTrades.length === 0) {
       return {
         ...this.getEmptyMetrics(),
         totalTrades: totalTradesCount,
         totalFees: totalFeesAll,
+        totalVolume: totalVolumeAll,
+        longTrades: longAll,
+        shortTrades: shortAll,
+        symbolStats: await this.calculateSymbolStats(userTrades),
       };
     }
 
+    const totalPnl = closedTrades.reduce(
+      (sum, t) => sum + parseFloat(t.pnl || "0"),
+      0
+    );
+    const totalVolume = totalVolumeAll;
+    const totalFees = closedTrades.reduce(
+      (sum, t) => sum + parseFloat(t.fee || "0"),
+      0
+    );
 
-    const totalPnl = closedTrades.reduce((sum, t) => sum + parseFloat(t.pnl || '0'), 0);
-    const totalVolume = closedTrades.reduce((sum, t) => sum + parseFloat(t.size || '0') * parseFloat(t.entryPrice || '0'), 0);
-    const totalFees = closedTrades.reduce((sum, t) => sum + parseFloat(t.fee || '0'), 0);
-
-
-    const winningTrades = closedTrades.filter(t => parseFloat(t.pnl || '0') > 0);
-    const losingTrades = closedTrades.filter(t => parseFloat(t.pnl || '0') < 0);
+    const winningTrades = closedTrades.filter(
+      (t) => parseFloat(t.pnl || "0") > 0
+    );
+    const losingTrades = closedTrades.filter(
+      (t) => parseFloat(t.pnl || "0") < 0
+    );
     
     const totalWins = winningTrades.reduce((sum, t) => sum + parseFloat(t.pnl || '0'), 0);
     const totalLosses = Math.abs(losingTrades.reduce((sum, t) => sum + parseFloat(t.pnl || '0'), 0));
@@ -324,29 +348,16 @@ export class AnalyticsEngine {
 
 
   private calculateAverageDuration(closedTrades: any[]): number {
-    // Group trades by signature to find entry/exit pairs
-    const tradeMap = new Map<string, any[]>();
-    
-    for (const trade of closedTrades) {
-      const sig = trade.signature;
-      if (!tradeMap.has(sig)) {
-        tradeMap.set(sig, []);
-      }
-      tradeMap.get(sig)?.push(trade);
-    }
-
     let totalDuration = 0;
     let tradeCount = 0;
 
-
-    for (const [_, tradePair] of tradeMap) {
-      if (tradePair.length >= 1) {
-        const entryTime = new Date(tradePair[0].timestamp).getTime();
-        const exitTime = tradePair[tradePair.length - 1].timestamp 
-          ? new Date(tradePair[tradePair.length - 1].timestamp).getTime()
-          : entryTime;
-        
-        const durationHours = (exitTime - entryTime) / (1000 * 60 * 60);
+    for (const trade of closedTrades) {
+      const exitTime = new Date(trade.timestamp).getTime();
+      const entryTime = trade.entryTimestamp
+        ? new Date(trade.entryTimestamp).getTime()
+        : exitTime;
+      const durationHours = (exitTime - entryTime) / (1000 * 60 * 60);
+      if (durationHours >= 0) {
         totalDuration += durationHours;
         tradeCount++;
       }

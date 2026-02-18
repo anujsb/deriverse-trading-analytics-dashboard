@@ -235,7 +235,7 @@ export function TradeHistory({
                           <StickyNote className="w-3.5 h-3.5" />
                         </button>
                         <a
-                          href={`https://solscan.io/tx/${trade.signature}`}
+                          href={`https://solscan.io/tx/${trade.signature.split('#')[0]}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-gray-600 hover:text-[#3b82f6] transition-colors"

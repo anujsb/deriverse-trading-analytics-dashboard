@@ -21,6 +21,7 @@ export const trades = pgTable('trades', {
 
   entryPrice: numeric('entry_price', { precision: 20, scale: 8 }).notNull(),
   exitPrice: numeric('exit_price', { precision: 20, scale: 8 }),
+  entryTimestamp: timestamp('entry_timestamp'),
   size: numeric('size', { precision: 20, scale: 8 }).notNull(),
   
 
