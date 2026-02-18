@@ -125,7 +125,7 @@ export function deriveTradesFromTransactions(
           }
         }
       } else {
-
+        // Opening - emit OPEN so user sees open positions
         trades.push({
           signature: fills.length > 1 ? `${signature}#${fillIdx}` : signature,
           timestamp,

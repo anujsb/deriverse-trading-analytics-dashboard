@@ -21,6 +21,8 @@ export interface TradeTransaction {
  * Fetches Deriverse transactions and derives closed trades with true PnL
  * from Program data logs (fills + position tracking).
  */
+const TX_BATCH_SIZE = 50;
+
 export async function fetchUserTrades(
   walletAddress: string,
   connection: Connection
@@ -32,15 +34,19 @@ export async function fetchUserTrades(
       limit: 1000,
     });
 
-    console.log(`Found ${signatures.length} transactions`);
-
-    const transactionResponses = await Promise.all(
-      signatures.map((sig) =>
-        connection.getTransaction(sig.signature, {
-          maxSupportedTransactionVersion: 0,
-        })
-      )
-    );
+    const transactionResponses: Awaited<ReturnType<Connection['getTransaction']>>[] = [];
+    for (let i = 0; i < signatures.length; i += TX_BATCH_SIZE) {
+      const batch = signatures.slice(i, i + TX_BATCH_SIZE);
+      const batchResponses = await Promise.all(
+        batch.map((sig) =>
+          connection.getTransaction(sig.signature, {
+            maxSupportedTransactionVersion: 0,
+            commitment: 'confirmed',
+          })
+        )
+      );
+      transactionResponses.push(...batchResponses);
+    }
 
     const deriverseTxs: { tx: unknown; signature: string; blockTime?: number | null; meta?: { fee?: number; logMessages?: string[] } | null }[] = [];
 
@@ -61,8 +67,6 @@ export async function fetchUserTrades(
         meta: tx.meta ? { fee: tx.meta.fee, logMessages: tx.meta.logMessages ?? undefined } : null,
       });
     }
-
-    console.log(`Deriving trades from ${deriverseTxs.length} Deriverse transactions`);
 
     const trades = deriveTradesFromTransactions(deriverseTxs);
 

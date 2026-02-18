@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
         const startDate = searchParams.get('startDate');
         const endDate = searchParams.get('endDate');
         const symbol = searchParams.get('symbol');
+        const status = searchParams.get('status'); // 'OPEN' | 'CLOSED' to filter
         const limit = parseInt(searchParams.get('limit') || '100');
         const offset = parseInt(searchParams.get('offset') || '0');
 
@@ -34,7 +35,9 @@ export async function GET(request: NextRequest) {
         if (symbol) {
             conditions.push(eq(trades.symbol, symbol));
         }
-
+        if (status === 'OPEN' || status === 'CLOSED') {
+            conditions.push(eq(trades.status, status));
+        }
 
         const userTrades = await db
             .select()

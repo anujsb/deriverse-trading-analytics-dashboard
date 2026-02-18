@@ -21,6 +21,7 @@ export interface FilterState {
   startDate: string;
   endDate: string;
   symbol: string;
+  status: string; // '' | 'CLOSED' | 'OPEN'
 }
 
 const PRESETS = [
@@ -35,6 +36,7 @@ export function Filters({ onFilterChange, symbols }: FiltersProps) {
     startDate: '',
     endDate: '',
     symbol: '',
+    status: '',
   });
   const [activePreset, setActivePreset] = useState<number>(0);
 
@@ -46,7 +48,7 @@ export function Filters({ onFilterChange, symbols }: FiltersProps) {
   };
 
   const handleReset = () => {
-    const resetFilters = { startDate: '', endDate: '', symbol: '' };
+    const resetFilters = { startDate: '', endDate: '', symbol: '', status: '' };
     setFilters(resetFilters);
     onFilterChange(resetFilters);
     setActivePreset(0);
@@ -129,6 +131,27 @@ export function Filters({ onFilterChange, symbols }: FiltersProps) {
 
         {/* Divider */}
         <div className="hidden sm:block bg-[#1e2a3a] w-px h-6" />
+
+        {/* Status select - default CLOSED to hide stale OPEN trades */}
+        <Select
+          value={filters.status || '__all__'}
+          onValueChange={(val) => handleChange('status', val === '__all__' ? '' : val)}
+        >
+          <SelectTrigger className="bg-[#080d13] border-[#1e2a3a] focus:border-[#f0b429]/50 rounded-lg focus:ring-0 w-[110px] h-8 font-mono text-[11px] text-gray-300">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent className="bg-[#0d1117] border-[#1e2a3a] font-mono text-[11px] text-gray-300">
+            <SelectItem value="__all__" className="hover:bg-[#1e2a3a] focus:bg-[#1e2a3a] text-gray-400">
+              All
+            </SelectItem>
+            <SelectItem value="CLOSED" className="hover:bg-[#1e2a3a] focus:bg-[#1e2a3a]">
+              Closed
+            </SelectItem>
+            <SelectItem value="OPEN" className="hover:bg-[#1e2a3a] focus:bg-[#1e2a3a]">
+              Open
+            </SelectItem>
+          </SelectContent>
+        </Select>
 
         {/* Symbol select */}
         <Select

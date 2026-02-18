@@ -20,6 +20,7 @@ export default function AnalyticsPage() {
     startDate: '',
     endDate: '',
     symbol: '',
+    status: '',
   });
   const [symbols, setSymbols] = useState<string[]>([]);
 
@@ -39,6 +40,7 @@ export default function AnalyticsPage() {
         ...(filters.startDate && { startDate: filters.startDate }),
         ...(filters.endDate && { endDate: filters.endDate }),
         ...(filters.symbol && { symbol: filters.symbol }),
+        ...(filters.status && { status: filters.status }),
       });
 
       const [metricsRes, tradesRes] = await Promise.all([

@@ -21,6 +21,7 @@ export default function TradesPage() {
     startDate: '',
     endDate: '',
     symbol: '',
+    status: '',
   });
   const [symbols, setSymbols] = useState<string[]>([]);
 
@@ -40,6 +41,7 @@ export default function TradesPage() {
         ...(filters.startDate && { startDate: filters.startDate }),
         ...(filters.endDate && { endDate: filters.endDate }),
         ...(filters.symbol && { symbol: filters.symbol }),
+        ...(filters.status && { status: filters.status }),
       });
 
       const [metricsRes, timeSeriesRes, tradesRes] = await Promise.all([
