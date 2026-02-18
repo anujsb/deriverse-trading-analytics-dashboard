@@ -1,3 +1,7 @@
+
+//  Deriverse program IDs and version from env. Used to filter txs and for any
+//  version-specific decoding. PROGRAM_IDS (comma) or PROGRAM_ID (single) override defaults.
+
 const DEFAULT_PROGRAM_IDS = [
   'CDESjex4EDBKLwx9ZPzVbjiHEHatasb5fhSJZMzNfvw2',
   'Drvrseg8AQLP8B96DBGmHRjFGviFNYTkHueY9g3k27Gu',

@@ -1,4 +1,6 @@
 
+//  Replays place-order + fill events in time order to build positions and emit
+//  OPEN/CLOSED trades. CLOSED trades get realized PnL and entryTimestamp for duration.
 
 import { TradeTransaction } from './fetch-transactions';
 import { parseProgramDataLogs } from './program-data-logs';

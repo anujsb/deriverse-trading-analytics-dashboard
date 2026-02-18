@@ -1,3 +1,8 @@
+
+// Aggregates trades from DB into metrics: PnL, win rate, volume, drawdown,
+// time-of-day buckets, symbol stats, fee breakdown. Uses closed trades for
+//PnL/win rate; all trades for volume.
+
 import { db } from '@/lib/db';
 import { trades } from '@/lib/db/schema';
 import { eq, and, gte, lte, sql, desc } from 'drizzle-orm';

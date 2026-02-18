@@ -1,4 +1,6 @@
-
+//  Parses Deriverse "Program data: <base64>" lines from tx meta.logMessages.
+//  Layout matches @deriverse/kit logs_models (LogType + struct sizes/offsets).
+//  Produces place orders, fills, and fees for derive-trades-from-logs.
 
 const DEC = 1_000_000_000;
 const USDC_DECIMALS = 1_000_000;

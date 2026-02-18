@@ -1,5 +1,8 @@
-import { pgTable, text, timestamp, numeric, varchar, boolean, index } from 'drizzle-orm/pg-core';
-
+/**
+ * Drizzle schema: users (wallet id), trades (signature PK, open/closed, PnL),
+ * trade_annotations (notes per trade), performance_snapshots.
+ */
+import { pgTable, text, timestamp, numeric, varchar, index } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: text('id').primaryKey(), 

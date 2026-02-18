@@ -1,9 +1,12 @@
-import { Connection, PublicKey } from '@solana/web3.js';
+//  Syncs a wallet's Deriverse trades: fetch → derive OPEN/CLOSED → reconcile with DB.
+//  Matches derived CLOSED to existing OPEN (FIFO by symbol+type) so open rows
+//  turn into closed when the user syncs again after closing on Deriverse.
+import { Connection } from '@solana/web3.js';
 import { db } from '@/lib/db';
 import { trades, users } from '@/lib/db/schema';
 import { fetchUserTrades } from '@/lib/solana/fetch-transactions';
 import type { TradeTransaction } from '@/lib/solana/fetch-transactions';
-import { eq, desc, and, asc } from 'drizzle-orm';
+import { eq, and, asc } from 'drizzle-orm';
 
 export class TradeSyncService {
   private connection: Connection;

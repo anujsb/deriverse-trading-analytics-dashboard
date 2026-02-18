@@ -1,3 +1,7 @@
+/**
+ * Fetches wallet transactions, keeps Deriverse txs only, and derives OPEN/CLOSED
+ * trades from Program data logs (see derive-trades-from-logs).
+ */
 import { Connection, PublicKey } from '@solana/web3.js';
 import { isDeriverseTransaction } from './parse-deriverse-tx';
 import { deriveTradesFromTransactions } from './derive-trades-from-logs';
@@ -17,10 +21,6 @@ export interface TradeTransaction {
   entryTimestamp?: number;
 }
 
-/**
- * Fetches Deriverse transactions and derives closed trades with true PnL
- * from Program data logs (fills + position tracking).
- */
 const TX_BATCH_SIZE = 50;
 
 export async function fetchUserTrades(

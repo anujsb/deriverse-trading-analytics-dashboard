@@ -1,4 +1,8 @@
 
+//  Detects Deriverse txs (program ID check) and optionally decodes instruction
+//  data (tags 10/19). Main trade source is log-based derivation; this is used
+//  for isDeriverseTransaction and as fallback.
+
 import bs58 from 'bs58';
 import { TradeTransaction } from './fetch-transactions';
 import { DERIVERSE_PROGRAM_IDS, DERIVERSE_PROGRAM_ID } from '@/lib/deriverse-config';
