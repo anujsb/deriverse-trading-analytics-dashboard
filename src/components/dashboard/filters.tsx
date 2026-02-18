@@ -1,7 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Calendar, SlidersHorizontal, RotateCcw } from 'lucide-react';
+import { SlidersHorizontal, RotateCcw, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { DateRange } from 'react-day-picker';
+
+import { cn } from '@/lib/utils';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -9,8 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 interface FiltersProps {
   onFilterChange: (filters: FilterState) => void;
@@ -31,6 +35,14 @@ const PRESETS = [
   { label: '90D', days: 90 },
 ];
 
+function toISO(date: Date) {
+  return format(date, 'yyyy-MM-dd');
+}
+
+function toDate(iso: string) {
+  return new Date(iso + 'T00:00:00');
+}
+
 export function Filters({ onFilterChange, symbols }: FiltersProps) {
   const [filters, setFilters] = useState<FilterState>({
     startDate: '',
@@ -38,46 +50,55 @@ export function Filters({ onFilterChange, symbols }: FiltersProps) {
     symbol: '',
     status: '',
   });
-  const [activePreset, setActivePreset] = useState<number>(0);
+  const [activePreset, setActivePreset] = useState(0);
 
-  const handleChange = (key: keyof FilterState, value: string) => {
-    const newFilters = { ...filters, [key]: value };
-    setFilters(newFilters);
-    onFilterChange(newFilters);
+  const applyFilters = (next: FilterState) => {
+    setFilters(next);
+    onFilterChange(next);
+  };
+
+  const handleDateRange = (range: DateRange | undefined) => {
     setActivePreset(-1);
+    applyFilters({
+      ...filters,
+      startDate: range?.from ? toISO(range.from) : '',
+      endDate: range?.to ? toISO(range.to) : '',
+    });
   };
 
   const handleReset = () => {
-    const resetFilters = { startDate: '', endDate: '', symbol: '', status: '' };
-    setFilters(resetFilters);
-    onFilterChange(resetFilters);
+    const reset = { startDate: '', endDate: '', symbol: '', status: '' };
+    setFilters(reset);
+    onFilterChange(reset);
     setActivePreset(0);
   };
 
   const setPreset = (days: number, index: number) => {
     setActivePreset(index);
     if (days === 0) {
-      const reset = { ...filters, startDate: '', endDate: '' };
-      setFilters(reset);
-      onFilterChange(reset);
+      applyFilters({ ...filters, startDate: '', endDate: '' });
       return;
     }
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-    const newFilters = {
-      ...filters,
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0],
-    };
-    setFilters(newFilters);
-    onFilterChange(newFilters);
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - days);
+    applyFilters({ ...filters, startDate: toISO(start), endDate: toISO(end) });
   };
+
+  const dateRange: DateRange | undefined = filters.startDate
+    ? { from: toDate(filters.startDate), to: filters.endDate ? toDate(filters.endDate) : undefined }
+    : undefined;
+
+  const dateLabel = filters.startDate
+    ? filters.endDate
+      ? `${format(toDate(filters.startDate), 'MMM d')} – ${format(toDate(filters.endDate), 'MMM d, yyyy')}`
+      : format(toDate(filters.startDate), 'MMM d, yyyy')
+    : 'Date range';
 
   return (
     <div className="bg-[#0d1117] p-4 border border-[#1e2a3a] rounded-xl">
       <div className="flex flex-wrap items-center gap-3">
-        {/* Icon + label */}
+        {/* Label */}
         <div className="flex items-center gap-2 mr-1">
           <SlidersHorizontal className="w-3.5 h-3.5 text-gray-500" />
           <span className="font-mono font-semibold text-[10px] text-gray-500 uppercase tracking-widest">
@@ -103,68 +124,63 @@ export function Filters({ onFilterChange, symbols }: FiltersProps) {
           ))}
         </div>
 
-        {/* Divider */}
         <div className="hidden sm:block bg-[#1e2a3a] w-px h-6" />
 
-        {/* Date range */}
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Calendar className="top-1/2 left-2.5 absolute w-3.5 h-3.5 text-gray-600 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="date"
-              value={filters.startDate}
-              onChange={(e) => handleChange('startDate', e.target.value)}
-              className="bg-[#080d13] py-1.5 pr-3 pl-8 border border-[#1e2a3a] focus:border-[#f0b429]/50 rounded-lg focus:outline-none focus:ring-0 w-[130px] font-mono text-[11px] text-gray-300 transition-colors"
+        {/* Date range picker — single popover, two-month calendar */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className={cn(
+                'flex items-center gap-2 bg-[#080d13] px-3 border hover:border-[#2e3d52] rounded-lg h-8 font-mono text-[11px] transition-all',
+                filters.startDate
+                  ? 'text-gray-200 border-[#f0b429]/30'
+                  : 'text-gray-500 border-[#1e2a3a]'
+              )}
+            >
+              <CalendarIcon
+                className={cn('w-3.5 h-3.5', filters.startDate ? 'text-[#f0b429]' : 'text-gray-600')}
+              />
+              {dateLabel}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="bg-[#0d1117] p-0 border-[#1e2a3a] w-auto" align="start">
+            <Calendar
+              mode="range"
+              selected={dateRange}
+              onSelect={handleDateRange}
+              numberOfMonths={2}
+              className="text-gray-300"
             />
-          </div>
-          <span className="font-mono text-gray-600 text-xs">→</span>
-          <div className="relative">
-            <Calendar className="top-1/2 left-2.5 absolute w-3.5 h-3.5 text-gray-600 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="date"
-              value={filters.endDate}
-              onChange={(e) => handleChange('endDate', e.target.value)}
-              className="bg-[#080d13] py-1.5 pr-3 pl-8 border border-[#1e2a3a] focus:border-[#f0b429]/50 rounded-lg focus:outline-none focus:ring-0 w-[130px] font-mono text-[11px] text-gray-300 transition-colors"
-            />
-          </div>
-        </div>
+          </PopoverContent>
+        </Popover>
 
-        {/* Divider */}
         <div className="hidden sm:block bg-[#1e2a3a] w-px h-6" />
 
-        {/* Status select - default CLOSED to hide stale OPEN trades */}
+        {/* Status */}
         <Select
           value={filters.status || '__all__'}
-          onValueChange={(val) => handleChange('status', val === '__all__' ? '' : val)}
+          onValueChange={(val) => applyFilters({ ...filters, status: val === '__all__' ? '' : val })}
         >
           <SelectTrigger className="bg-[#080d13] border-[#1e2a3a] focus:border-[#f0b429]/50 rounded-lg focus:ring-0 w-[110px] h-8 font-mono text-[11px] text-gray-300">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent className="bg-[#0d1117] border-[#1e2a3a] font-mono text-[11px] text-gray-300">
-            <SelectItem value="__all__" className="hover:bg-[#1e2a3a] focus:bg-[#1e2a3a] text-gray-400">
-              All
-            </SelectItem>
-            <SelectItem value="CLOSED" className="hover:bg-[#1e2a3a] focus:bg-[#1e2a3a]">
-              Closed
-            </SelectItem>
-            <SelectItem value="OPEN" className="hover:bg-[#1e2a3a] focus:bg-[#1e2a3a]">
-              Open
-            </SelectItem>
+            <SelectItem value="__all__" className="hover:bg-[#1e2a3a] focus:bg-[#1e2a3a] text-gray-400">All</SelectItem>
+            <SelectItem value="CLOSED" className="hover:bg-[#1e2a3a] focus:bg-[#1e2a3a]">Closed</SelectItem>
+            <SelectItem value="OPEN" className="hover:bg-[#1e2a3a] focus:bg-[#1e2a3a]">Open</SelectItem>
           </SelectContent>
         </Select>
 
-        {/* Symbol select */}
+        {/* Symbol */}
         <Select
           value={filters.symbol || '__all__'}
-          onValueChange={(val) => handleChange('symbol', val === '__all__' ? '' : val)}
+          onValueChange={(val) => applyFilters({ ...filters, symbol: val === '__all__' ? '' : val })}
         >
           <SelectTrigger className="bg-[#080d13] border-[#1e2a3a] focus:border-[#f0b429]/50 rounded-lg focus:ring-0 w-[140px] h-8 font-mono text-[11px] text-gray-300">
             <SelectValue placeholder="All symbols" />
           </SelectTrigger>
           <SelectContent className="bg-[#0d1117] border-[#1e2a3a] font-mono text-[11px] text-gray-300">
-            <SelectItem value="__all__" className="hover:bg-[#1e2a3a] focus:bg-[#1e2a3a] text-gray-400">
-              All Symbols
-            </SelectItem>
+            <SelectItem value="__all__" className="hover:bg-[#1e2a3a] focus:bg-[#1e2a3a] text-gray-400">All Symbols</SelectItem>
             {symbols.map((symbol) => (
               <SelectItem key={symbol} value={symbol} className="hover:bg-[#1e2a3a] focus:bg-[#1e2a3a]">
                 {symbol}

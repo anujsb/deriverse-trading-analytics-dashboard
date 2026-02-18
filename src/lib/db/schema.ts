@@ -1,7 +1,7 @@
-/**
- * Drizzle schema: users (wallet id), trades (signature PK, open/closed, PnL),
- * trade_annotations (notes per trade), performance_snapshots.
- */
+//  Drizzle schema: users (wallet id), trades (signature PK, open/closed, PnL),
+//  Drizzle schema: users (wallet id), trades (signature PK, open/closed, PnL),
+//  trade_annotations (notes per trade), performance_snapshots.
+
 import { pgTable, text, timestamp, numeric, varchar, index } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
