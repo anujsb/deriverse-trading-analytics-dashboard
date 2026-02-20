@@ -48,7 +48,6 @@ interface Props {
     endDate?: string;
 }
 
-
 function computeStats(trades: Trade[]) {
     const closed = trades.filter((t) => t.status === "CLOSED" && t.pnl !== null);
     const open = trades.filter((t) => t.status === "OPEN");
@@ -100,14 +99,9 @@ function computeStats(trades: Trade[]) {
     };
 }
 
+export default function AiTradingSummary({ symbol, startDate, endDate }: Props) {
+    const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY ?? "";
 
-
-export default function AiTradingSummary({
-    symbol,
-    startDate,
-    endDate,
-}: Props) {
-    const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY ?? "";
     const { publicKey, connected, connecting } = useWallet();
     const { setVisible } = useWalletModal();
     const userId = publicKey?.toString() ?? null;
@@ -170,8 +164,14 @@ export default function AiTradingSummary({
     }, [userId, symbol, startDate, endDate]);
 
     async function generateSummary() {
-        if (!GEMINI_API_KEY) { setAiError("NEXT_PUBLIC_GEMINI_API_KEY is not set in your .env.local"); return; }
-        if (!trades.length) { setAiError("No trades loaded to analyze."); return; }
+        if (!GROQ_API_KEY) {
+            setAiError("NEXT_PUBLIC_GROQ_API_KEY is not set in your .env.local — get a free key at console.groq.com");
+            return;
+        }
+        if (!trades.length) {
+            setAiError("No trades loaded to analyze.");
+            return;
+        }
 
         setLoadingAI(true);
         setAiError("");
@@ -223,23 +223,30 @@ Date range: ${trades[trades.length - 1]?.timestamp?.slice(0, 10)} → ${trades[0
 Be specific and data-driven. Reference actual numbers.`;
 
         try {
-            const res = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: { temperature: 0.6, maxOutputTokens: 1000 },
-                    }),
-                }
-            );
+            const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${GROQ_API_KEY}`,
+                },
+                body: JSON.stringify({
+                    model: "llama-3.3-70b-versatile", 
+                    messages: [{ role: "user", content: prompt }],
+                    max_tokens: 1000,
+                    temperature: 0.6,
+                }),
+            });
+
             if (!res.ok) {
                 const e = await res.json();
-                throw new Error(e.error?.message || "Gemini API error");
+                if (res.status === 429) {
+                    throw new Error("Groq free tier rate limit hit. Wait a minute and try again.");
+                }
+                throw new Error(e.error?.message || `Groq API error (${res.status})`);
             }
+
             const data = await res.json();
-            setSummary(data.candidates?.[0]?.content?.parts?.[0]?.text ?? "No response generated.");
+            setSummary(data.choices?.[0]?.message?.content ?? "No response generated.");
             setGeneratedAt(new Date().toLocaleTimeString());
         } catch (e: any) {
             setAiError(e.message);
@@ -305,8 +312,6 @@ Be specific and data-driven. Reference actual numbers.`;
         .btn:hover{opacity:0.85}.btn:disabled{opacity:0.35;cursor:not-allowed}
         .btn-outline{background:none;border:1px solid #e2c97e55;color:#e2c97e;border-radius:4px;padding:10px 22px;font-family:inherit;font-size:11px;font-weight:500;cursor:pointer;letter-spacing:0.1em;text-transform:uppercase;transition:all 0.15s;display:inline-flex;align-items:center;gap:7px}
         .btn-outline:hover{background:#e2c97e11}
-        .inp{background:#0c0d0e;border:1px solid #1e2022;border-radius:4px;padding:9px 13px;color:#f0ebe0;font-family:inherit;font-size:11px;width:100%;outline:none;transition:border-color 0.2s}
-        .inp:focus{border-color:#e2c97e55}
         .ghost{background:none;border:1px solid #1e2022;border-radius:3px;padding:5px 11px;color:#555;font-size:10px;cursor:pointer;font-family:inherit;letter-spacing:0.08em;transition:border-color 0.15s,color 0.15s}
         .ghost:hover{border-color:#e2c97e44;color:#888}.ghost:disabled{opacity:0.3;cursor:not-allowed}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
@@ -346,7 +351,6 @@ Be specific and data-driven. Reference actual numbers.`;
                     )}
                 </div>
             </div>
-
 
             {!connecting && !connected && (
                 <div className="card fade-up" style={{ textAlign: "center", padding: "52px 24px" }}>
@@ -477,7 +481,7 @@ Be specific and data-driven. Reference actual numbers.`;
                         <div>
                             <div style={{ fontSize: 9, color: "#3a3c40", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 4 }}>AI Analysis</div>
                             <div style={{ fontSize: 12, color: "#3a3c40" }}>
-                                Gemini 2.0 Flash · {userId ? `${userId.slice(0, 4)}…${userId.slice(-4)}` : "—"}
+                                Llama 3.3 70B · Groq · {userId ? `${userId.slice(0, 4)}…${userId.slice(-4)}` : "—"}
                             </div>
                         </div>
                     </div>
@@ -499,9 +503,7 @@ Be specific and data-driven. Reference actual numbers.`;
                         <div style={{ textAlign: "center", padding: "36px 0 16px", color: "#1e2022" }}>
                             <div style={{ fontSize: 28, marginBottom: 10 }}>◈</div>
                             <div style={{ fontSize: 11, letterSpacing: "0.08em", lineHeight: 1.9 }}>
-                                {trades.length === 0
-                                    ? "No trade data to analyze."
-                                    : ""}
+                                {trades.length === 0 ? "No trade data to analyze." : ""}
                             </div>
                         </div>
                     )}
@@ -521,7 +523,7 @@ Be specific and data-driven. Reference actual numbers.`;
                             {renderMd(summary)}
                             <div style={{ marginTop: 18, paddingTop: 12, borderTop: "1px solid #131415", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <span style={{ fontSize: 9, color: "#1e2022", letterSpacing: "0.1em" }}>
-                                    GEMINI 2.0 FLASH · {generatedAt}
+                                    LLAMA 3.3 70B · GROQ · {generatedAt}
                                 </span>
                                 <button className="ghost" onClick={generateSummary} disabled={loadingAI}>↻ Refresh</button>
                             </div>
@@ -531,7 +533,7 @@ Be specific and data-driven. Reference actual numbers.`;
             )}
 
             <div style={{ marginTop: 14, textAlign: "center", fontSize: 9, color: "#181a1c", letterSpacing: "0.14em" }}>
-                DERIVERSE · GEMINI AI
+                DERIVERSE · GROQ AI
             </div>
         </div>
     );
