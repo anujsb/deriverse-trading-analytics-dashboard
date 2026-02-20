@@ -26,9 +26,7 @@ export default function DashboardPage() {
   const [symbols, setSymbols] = useState<string[]>([]);
 
   useEffect(() => {
-    if (connected && publicKey) {
-      fetchData();
-    }
+    if (connected && publicKey) fetchData();
   }, [connected, publicKey, filters]);
 
   const fetchData = async () => {
@@ -97,87 +95,106 @@ export default function DashboardPage() {
 
   if (!connected) {
     return (
-      <div className="flex justify-center items-center bg-[#080d13] min-h-screen">
-        <div className="px-6 text-center">
-          {/* Decorative ring */}
-          <div className="inline-flex relative justify-center items-center mb-8">
-            <div className="absolute border border-[#f0b429]/20 rounded-full w-32 h-32 animate-ping" style={{ animationDuration: '3s' }} />
-            <div className="absolute border border-[#f0b429]/30 rounded-full w-24 h-24" />
-            <div className="relative flex justify-center items-center bg-[#f0b429]/10 rounded-full w-16 h-16">
-              <TrendingUp className="w-7 h-7 text-[#f0b429]" />
+      <>
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Cormorant+Garamond:wght@500;600&display=swap');
+          @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+          @keyframes pulse-ring { 0%, 100% { opacity: 0.2; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.08); } }
+          .connect-page { font-family: 'DM Mono', monospace; }
+          .pulse-ring { animation: pulse-ring 3s ease-in-out infinite; }
+          .fade-up { animation: fadeUp 0.5s ease forwards; }
+        `}</style>
+        <div className="flex justify-center items-center min-h-screen connect-page" style={{ background: '#0c0d0e' }}>
+          <div className="px-8 text-center fade-up">
+            <div className="inline-flex relative justify-center items-center mb-10">
+              <div className="absolute border border-[#e2c97e]/20 rounded-full pulse-ring w-36 h-36" />
+              <div className="absolute border border-[#e2c97e]/10 rounded-full w-24 h-24" />
+              <div className="relative flex justify-center items-center rounded-full w-16 h-16" style={{ background: '#111213', border: '1px solid #e2c97e22' }}>
+                <TrendingUp className="w-6 h-6" style={{ color: '#e2c97e' }} />
+              </div>
             </div>
-          </div>
 
-          <h1 className="mb-3 font-bold text-white text-4xl tracking-tight">
-            Deriverse Analytics
-          </h1>
-          <p className="mb-2 font-mono text-[#f0b429] text-sm uppercase tracking-widest">
-            On-chain Trading Intelligence
-          </p>
-          <p className="mx-auto mb-10 max-w-xs text-gray-500 text-sm leading-relaxed">
-            Connect your Solana wallet to unlock full PnL tracking, fee analysis, and performance insights.
-          </p>
-          <WalletConnectButton />
+            <div style={{ fontSize: 9, color: '#333', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 10 }}>
+              Deriverse · On-chain Intelligence
+            </div>
+            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 600, color: '#f0ebe0', margin: '0 0 8px' }}>
+              Deriverse Analytics
+            </h1>
+            <p style={{ fontSize: 11, color: '#3a3c40', letterSpacing: '0.08em', marginBottom: 32, lineHeight: 1.8 }}>
+              Connect your Solana wallet to unlock PnL tracking,<br />fee analysis, and performance insights.
+            </p>
+            <WalletConnectButton />
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="bg-[#080d13] min-h-screen">
-      {/* Page Header */}
-      <header className="top-0 z-10 sticky bg-[#0d1117]/90 backdrop-blur border-[#1e2a3a] border-b">
-        <div className="px-5 sm:px-8 py-3.5">
-          <div className="flex justify-between items-center">
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-bold text-white text-lg tracking-tight">
-                  Overview
-                </h1>
-                <span className="hidden sm:inline-block bg-[#f0b429]/10 px-2 py-0.5 border border-[#f0b429]/20 rounded font-mono font-semibold text-[#f0b429] text-[10px] uppercase tracking-widest">
-                  Live
-                </span>
-              </div>
-              <p className="mt-0.5 font-mono text-[11px] text-gray-600">
-                {publicKey?.toBase58().slice(0, 6)}...{publicKey?.toBase58().slice(-6)}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleSync}
-                disabled={syncing}
-                className="flex items-center gap-1.5 bg-[#f0b429] hover:bg-[#d4a017] disabled:opacity-40 px-3 py-1.5 rounded-md font-semibold text-[#080d13] text-xs transition-all"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
-                {syncing ? "Syncing" : "Sync"}
-              </button>
-              <WalletConnectButton />
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Cormorant+Garamond:wght@500;600&display=swap');
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .dv-page { font-family: 'DM Mono', 'Courier New', monospace; background: #0c0d0e; min-height: 100vh; color: #f0ebe0; }
+        .dv-header { position: sticky; top: 0; z-index: 10; background: rgba(12,13,14,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid #1a1c1e; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
+        .dv-header-left .eyebrow { font-size: 9px; color: #2e3033; letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 4px; }
+        .dv-header-left h1 { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; margin: 0; color: #f0ebe0; }
+        .dv-header-right { display: flex; align-items: center; gap: 10px; }
+        .dv-wallet-badge { display: flex; align-items: center; gap: 6px; background: #111213; border: 1px solid #1e2022; border-radius: 4px; padding: 7px 12px; font-size: 10px; color: #444; letter-spacing: 0.06em; }
+        .dv-wallet-badge .dot { color: #4ade80; font-size: 8px; }
+        .dv-sync-btn { display: inline-flex; align-items: center; gap: 6px; background: #e2c97e; color: #0c0d0e; border: none; padding: 8px 16px; border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500; cursor: pointer; letter-spacing: 0.1em; text-transform: uppercase; transition: opacity 0.15s; }
+        .dv-sync-btn:hover { opacity: 0.85; }
+        .dv-sync-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .dv-sync-icon { width: 12px; height: 12px; }
+        .dv-sync-icon.spinning { animation: spin 0.7s linear infinite; }
+        .dv-main { padding: 24px; max-width: 1400px; }
+        .dv-live-badge { display: inline-flex; align-items: center; gap: 5px; background: #e2c97e11; border: 1px solid #e2c97e22; border-radius: 3px; padding: 3px 8px; font-size: 9px; color: #e2c97e; letter-spacing: 0.12em; text-transform: uppercase; margin-left: 8px; }
+        .dv-live-dot { width: 5px; height: 5px; border-radius: 50%; background: #4ade80; animation: pulse-green 2s ease-in-out infinite; }
+        @keyframes pulse-green { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .fade-up { animation: fadeUp 0.3s ease; }
+      `}</style>
+
+      <div className="dv-page">
+        <header className="dv-header">
+          <div className="dv-header-left">
+            <div className="eyebrow">Deriverse · Overview</div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <h1>Portfolio Overview</h1>
+              <span className="dv-live-badge">
+                <span className="dv-live-dot" />
+                Live
+              </span>
             </div>
           </div>
-        </div>
-      </header>
+          <div className="dv-header-right">
+            <div className="dv-wallet-badge">
+              <span className="dot">●</span>
+              <span>{publicKey?.toBase58().slice(0, 5)}…{publicKey?.toBase58().slice(-5)}</span>
+            </div>
+            <button className="dv-sync-btn" onClick={handleSync} disabled={syncing}>
+              <RefreshCw className={`dv-sync-icon ${syncing ? 'spinning' : ''}`} />
+              {syncing ? 'Syncing…' : 'Sync'}
+            </button>
+            <WalletConnectButton />
+          </div>
+        </header>
 
-      <main className="px-5 sm:px-8 py-6 max-w-[1400px]">
-        {/* Filters */}
-        <div className="mb-6">
-          <Filters onFilterChange={setFilters} symbols={symbols} />
-        </div>
+        <main className="dv-main">
+          <div style={{ marginBottom: 20 }}>
+            <Filters onFilterChange={setFilters} symbols={symbols} />
+          </div>
 
-        {/* Metrics */}
-        <div className="mb-6">
-          <MetricsCards metrics={metrics} loading={loading} />
-        </div>
+          <div style={{ marginBottom: 20 }}>
+            <MetricsCards metrics={metrics} loading={loading} />
+          </div>
 
-        {/* Charts Grid */}
-        <div className="gap-4 grid grid-cols-1 xl:grid-cols-3">
-          <div className="xl:col-span-2">
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
             <PnLChart data={timeSeriesData} loading={loading} />
-          </div>
-          <div className="xl:col-span-1">
             <SymbolPerformance symbols={metrics?.symbolStats || []} loading={loading} />
           </div>
-        </div>
-      </main>
-    </div>
+        </main>
+      </div>
+    </>
   );
 }

@@ -17,7 +17,6 @@ export default function HomePage() {
 
       <div className="top-1/2 left-1/2 absolute bg-[#f0b429] opacity-[0.04] blur-[120px] rounded-full w-[700px] h-[700px] -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
 
-
       <div className="top-0 right-0 left-0 absolute flex justify-between items-center px-8 py-5 border-[#1e2a3a] border-b">
         <span className="font-mono font-bold text-[11px] text-gray-500 uppercase tracking-[0.2em]">
           Deriverse Analytics

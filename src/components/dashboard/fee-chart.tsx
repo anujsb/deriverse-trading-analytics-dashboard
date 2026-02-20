@@ -3,7 +3,6 @@
 import { TimeSeriesData } from '@/lib/analytics/metrics';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format } from 'date-fns';
-import { Card } from '@/components/ui/card';
 
 interface FeeChartProps {
   data: TimeSeriesData[];
@@ -13,85 +12,83 @@ interface FeeChartProps {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-[#0d1117] shadow-xl px-3 py-2.5 border border-[#1e2a3a] rounded-lg">
-      <p className="mb-1.5 font-mono text-[10px] text-gray-500">
+    <div style={{ background: '#0e0f10', border: '1px solid #1e2022', borderRadius: 5, padding: '10px 14px', fontFamily: "'DM Mono', monospace" }}>
+      <div style={{ fontSize: 9, color: '#3a3c40', letterSpacing: '0.1em', marginBottom: 7 }}>
         {format(new Date(label), 'MMM dd, yyyy')}
-      </p>
+      </div>
       {payload.map((p: any) => (
-        <p key={p.name} className="font-mono text-[11px]" style={{ color: p.color }}>
-          {p.name === 'cumulativeFees' ? 'Cumulative' : 'Daily'}: ${Number(p.value).toFixed(4)}
-        </p>
+        <div key={p.name} style={{ fontSize: 11, color: p.color, marginBottom: 2 }}>
+          {p.name === 'cumulativeFees' ? 'Cumulative' : 'Daily'}: ${Number(p.value).toFixed(5)}
+        </div>
       ))}
     </div>
   );
 };
 
 export function FeeChart({ data, loading }: FeeChartProps) {
+  const card: React.CSSProperties = {
+    background: '#111213', border: '1px solid #1e2022', borderRadius: 6,
+    padding: 16, fontFamily: "'DM Mono', 'Courier New', monospace",
+  };
+  const labelStyle: React.CSSProperties = {
+    fontSize: 9, color: '#3a3c40', letterSpacing: '0.14em',
+    textTransform: 'uppercase', marginBottom: 14,
+  };
+
   if (loading) {
     return (
-      <Card className="bg-[#0d1117] p-5 border-[#1e2a3a] rounded-xl">
-        <div className="bg-[#1e2a3a] mb-4 rounded w-1/3 h-4 animate-pulse" />
-        <div className="bg-[#080d13] rounded-lg h-52 animate-pulse" />
-      </Card>
+      <div style={card}>
+        <div style={{ background: '#1a1c1e', borderRadius: 4, width: '40%', height: 10, marginBottom: 16, animation: 'dv-pulse 1.4s ease-in-out infinite' }} />
+        <div style={{ background: '#0c0d0e', borderRadius: 5, height: 220, animation: 'dv-pulse 1.4s ease-in-out infinite' }} />
+      </div>
     );
   }
 
   if (!data || data.length === 0) {
     return (
-      <Card className="bg-[#0d1117] p-5 border-[#1e2a3a] rounded-xl">
-        <p className="mb-4 font-mono font-semibold text-[10px] text-gray-500 uppercase tracking-widest">
-          Cumulative Fees
-        </p>
-        <div className="flex justify-center items-center h-52 font-mono text-gray-600 text-sm">
-          No fee data
+      <div style={card}>
+        <div style={labelStyle}>Cumulative Fees</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 220, fontSize: 11, color: '#252729' }}>
+          No fee data available
         </div>
-      </Card>
+      </div>
     );
   }
 
   return (
-    <Card className="bg-[#0d1117] p-5 border-[#1e2a3a] rounded-xl">
-      <p className="mb-5 font-mono font-semibold text-[10px] text-gray-500 uppercase tracking-widest">
-        Cumulative Fees Over Time
-      </p>
-
+    <div style={card}>
+      <div style={labelStyle}>Cumulative Fees Over Time</div>
       <ResponsiveContainer width="100%" height={220}>
         <AreaChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
           <defs>
-            <linearGradient id="colorFeesDark" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
-              <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+            <linearGradient id="dvFeesGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%"  stopColor="#f87171" stopOpacity={0.15} />
+              <stop offset="95%" stopColor="#f87171" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1e2a3a" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#181a1c" vertical={false} />
           <XAxis
             dataKey="date"
-            tickFormatter={(date) => format(new Date(date), 'MMM dd')}
-            stroke="#2a3a4a"
-            tick={{ fill: '#4b5563', fontFamily: 'monospace', fontSize: 10 }}
-            axisLine={false}
-            tickLine={false}
+            tickFormatter={(d) => format(new Date(d), 'MMM dd')}
+            stroke="transparent"
+            tick={{ fill: '#2e3033', fontFamily: "'DM Mono', monospace", fontSize: 9 }}
+            axisLine={false} tickLine={false}
           />
           <YAxis
-            stroke="#2a3a4a"
-            tick={{ fill: '#4b5563', fontFamily: 'monospace', fontSize: 10 }}
-            tickFormatter={(v) => `$${v.toFixed(2)}`}
-            axisLine={false}
-            tickLine={false}
-            width={56}
+            stroke="transparent"
+            tick={{ fill: '#2e3033', fontFamily: "'DM Mono', monospace", fontSize: 9 }}
+            tickFormatter={(v) => `$${v.toFixed(3)}`}
+            axisLine={false} tickLine={false} width={54}
           />
           <Tooltip content={<CustomTooltip />} />
           <Area
-            type="monotone"
-            dataKey="cumulativeFees"
-            stroke="#ef4444"
-            strokeWidth={1.5}
-            fill="url(#colorFeesDark)"
-            fillOpacity={1}
+            type="monotone" dataKey="cumulativeFees"
+            stroke="#f87171" strokeWidth={1.5}
+            fill="url(#dvFeesGrad)" fillOpacity={1}
             name="cumulativeFees"
           />
         </AreaChart>
       </ResponsiveContainer>
-    </Card>
+    </div>
   );
 }
