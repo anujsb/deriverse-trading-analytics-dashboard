@@ -373,7 +373,7 @@ Be specific and data-driven. Reference actual numbers.`;
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "52px 0", color: "#333" }}>
                     <div className="spinner" />
                     <span style={{ fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase" }}>
-                        Fetching trades from Neon DB…
+                        Fetching trades from DB…
                     </span>
                 </div>
             )}
@@ -501,7 +501,7 @@ Be specific and data-driven. Reference actual numbers.`;
                             <div style={{ fontSize: 11, letterSpacing: "0.08em", lineHeight: 1.9 }}>
                                 {trades.length === 0
                                     ? "No trade data to analyze."
-                                    : "Enter your Gemini key and click Generate."}
+                                    : ""}
                             </div>
                         </div>
                     )}
@@ -531,7 +531,7 @@ Be specific and data-driven. Reference actual numbers.`;
             )}
 
             <div style={{ marginTop: 14, textAlign: "center", fontSize: 9, color: "#181a1c", letterSpacing: "0.14em" }}>
-                DERIVERSE · NEON DB · GEMINI AI
+                DERIVERSE · GEMINI AI
             </div>
         </div>
     );

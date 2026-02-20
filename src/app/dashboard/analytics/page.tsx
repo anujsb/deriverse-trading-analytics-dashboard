@@ -6,7 +6,7 @@ import { WalletConnectButton } from '@/components/wallet-connect-button';
 import { TimeOfDaySection } from '@/components/dashboard/time-of-day-section';
 import { SymbolPerformance } from '@/components/dashboard/symbol-performance';
 import { Filters, FilterState } from '@/components/dashboard/filters';
-import { TradeMetrics, TimeSeriesData } from '@/lib/analytics/metrics';
+import { TradeMetrics } from '@/lib/analytics/metrics';
 import { RefreshCw } from 'lucide-react';
 
 export default function AnalyticsPage() {
@@ -90,87 +90,71 @@ export default function AnalyticsPage() {
 
   if (!connected) {
     return (
-      <>
-        <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Cormorant+Garamond:wght@500;600&display=swap');
-          @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
-          .dv-page { font-family: 'DM Mono', monospace; }
-          .fade-up { animation: fadeUp 0.5s ease forwards; }
-        `}</style>
-        <div className="flex justify-center items-center min-h-screen dv-page" style={{ background: '#0c0d0e' }}>
-          <div className="px-8 text-center fade-up">
-            <div style={{ fontSize: 28, color: '#252729', marginBottom: 16 }}>◈</div>
-            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: '#555', margin: '0 0 8px' }}>
-              Wallet not connected
-            </h2>
-            <p style={{ fontSize: 11, color: '#333', letterSpacing: '0.08em', marginBottom: 24 }}>
-              Connect your Solana wallet to view analytics
-            </p>
-            <WalletConnectButton />
-          </div>
+      <div className="flex justify-center items-center bg-[#0c0d0e] min-h-screen font-mono">
+        <div className="px-8 text-center">
+          <div className="mb-4 text-[#252729] text-[28px]">◈</div>
+          <h2 className="mb-2 text-[#555] text-[22px]" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+            Wallet not connected
+          </h2>
+          <p className="mb-6 font-mono text-[#333] text-[11px] tracking-[0.08em]">
+            Connect your Solana wallet to view analytics
+          </p>
+          <WalletConnectButton />
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Cormorant+Garamond:wght@500;600&display=swap');
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .dv-page { font-family: 'DM Mono', 'Courier New', monospace; background: #0c0d0e; min-height: 100vh; color: #f0ebe0; }
-        .dv-header { position: sticky; top: 0; z-index: 10; background: rgba(12,13,14,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid #1a1c1e; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
-        .dv-header-left .eyebrow { font-size: 9px; color: #2e3033; letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 4px; }
-        .dv-header-left h1 { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; margin: 0; color: #f0ebe0; }
-        .dv-header-right { display: flex; align-items: center; gap: 10px; }
-        .dv-wallet-badge { display: flex; align-items: center; gap: 6px; background: #111213; border: 1px solid #1e2022; border-radius: 4px; padding: 7px 12px; font-size: 10px; color: #444; letter-spacing: 0.06em; }
-        .dv-wallet-badge .dot { color: #4ade80; font-size: 8px; }
-        .dv-sync-btn { display: inline-flex; align-items: center; gap: 6px; background: #e2c97e; color: #0c0d0e; border: none; padding: 8px 16px; border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500; cursor: pointer; letter-spacing: 0.1em; text-transform: uppercase; transition: opacity 0.15s; }
-        .dv-sync-btn:hover { opacity: 0.85; }
-        .dv-sync-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-        .dv-sync-icon { width: 12px; height: 12px; }
-        .dv-sync-icon.spinning { animation: spin 0.7s linear infinite; }
-        .dv-main { padding: 24px; max-width: 1400px; }
-      `}</style>
+    <div className="bg-[#0c0d0e] min-h-screen font-mono text-[#f0ebe0]">
 
-      <div className="dv-page">
-        <header className="dv-header">
-          <div className="dv-header-left">
-            <div className="eyebrow">Deriverse · Analytics</div>
-            <h1>Analytics</h1>
-          </div>
-          <div className="dv-header-right">
-            <div className="dv-wallet-badge">
-              <span className="dot">●</span>
-              <span>{publicKey?.toBase58().slice(0, 5)}…{publicKey?.toBase58().slice(-5)}</span>
-            </div>
-            <button className="dv-sync-btn" onClick={handleSync} disabled={syncing}>
-              <RefreshCw className={`dv-sync-icon ${syncing ? 'spinning' : ''}`} />
-              {syncing ? 'Syncing…' : 'Sync'}
-            </button>
-            <WalletConnectButton />
-          </div>
-        </header>
+      {/* Header */}
+      <header className="top-0 z-10 sticky flex justify-between items-center bg-[rgba(12,13,14,0.92)] backdrop-blur-md px-6 py-[14px] border-[#1a1c1e] border-b">
+        <div>
+          <p className="mb-1 font-mono text-[#2e3033] text-[9px] uppercase tracking-[0.18em]">
+            Deriverse · Analytics
+          </p>
+          <h1 className="font-[600] text-[#f0ebe0] text-[20px]" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+            Analytics
+          </h1>
+        </div>
 
-        <main className="dv-main">
-          <div style={{ marginBottom: 20 }}>
-            <Filters onFilterChange={setFilters} symbols={symbols} />
+        <div className="flex items-center gap-[10px]">
+          <div className="flex items-center gap-[6px] bg-[#111213] px-3 py-[7px] border border-[#1e2022] rounded font-mono text-[#444] text-[10px] tracking-[0.06em]">
+            <span className="text-[#4ade80] text-[8px]">●</span>
+            <span>{publicKey?.toBase58().slice(0, 5)}…{publicKey?.toBase58().slice(-5)}</span>
           </div>
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className="inline-flex items-center gap-[6px] bg-[#e2c97e] hover:opacity-85 disabled:opacity-35 px-4 py-2 rounded font-[500] font-mono text-[#0c0d0e] text-[10px] uppercase tracking-[0.1em] transition-opacity cursor-pointer disabled:cursor-not-allowed"
+          >
+            <RefreshCw className={`w-3 h-3 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Syncing…' : 'Sync'}
+          </button>
+          <WalletConnectButton />
+        </div>
+      </header>
 
-          <div style={{ marginBottom: 20 }}>
-            <TimeOfDaySection
-              timeOfDayStats={metrics?.timeOfDayStats ?? []}
-              sessionStats={metrics?.sessionStats ?? []}
-              loading={loading}
-            />
-          </div>
+      {/* Main */}
+      <main className="px-6 py-6 max-w-[1400px]">
+        <div className="mb-5">
+          <Filters onFilterChange={setFilters} symbols={symbols} />
+        </div>
 
-          <SymbolPerformance
-            symbols={metrics?.symbolStats || []}
+        <div className="mb-5">
+          <TimeOfDaySection
+            timeOfDayStats={metrics?.timeOfDayStats ?? []}
+            sessionStats={metrics?.sessionStats ?? []}
             loading={loading}
           />
-        </main>
-      </div>
-    </>
+        </div>
+
+        <SymbolPerformance
+          symbols={metrics?.symbolStats || []}
+          loading={loading}
+        />
+      </main>
+    </div>
   );
 }
